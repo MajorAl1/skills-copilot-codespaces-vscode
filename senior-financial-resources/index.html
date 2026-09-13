@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Senior Financial Resources v1.5 — federal programs, non-profits, event triage, fraud, long-term care. Reference, not advice.">
+<title>Senior Financial Resources v1.5</title>
+<style>
+:root {
+  --bg: #FAFAF7;
+  --text: #1A1A1A;
+  --muted: #555;
+  --line: #d8d6d0;
+  --primary: #1E40AF;
+  --primary-hover: #1A3796;
+  --card: #FFFFFF;
+  --verified-bg: #DCEEDC;
+  --verified-fg: #1F5A2D;
+  --plausible-bg: #F4E8C8;
+  --plausible-fg: #7A5A0F;
+  --state-bg: #DCE3EE;
+  --state-fg: #324A6E;
+  --crisis-bg: #F4D8D4;
+  --crisis-fg: #7A2118;
+  --focus: #1E40AF;
+  --base-size: 17px;
+}
+html.large-text { --base-size: 22px; }
+* { box-sizing: border-box; }
+html { font-size: var(--base-size); }
+body {
+  margin: 0; padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: var(--bg); color: var(--text); line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--primary); }
+a:focus, button:focus, input:focus, [tabindex]:focus { outline: 3px solid var(--focus); outline-offset: 2px; }
+button { font: inherit; cursor: pointer; }
+
+.app { max-width: 760px; margin: 0 auto; padding: 0 16px 80px; }
+
+header.site {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--bg); border-bottom: 1px solid var(--line);
+  padding: 10px 16px;
+}
+.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; max-width: 760px; margin: 0 auto; }
+.brand { font-weight: 700; font-size: 1rem; margin-right: auto; }
+.brand a { color: var(--text); text-decoration: none; }
+.brand small { font-weight: 400; color: var(--muted); display: block; font-size: 0.8rem; }
+.toolbar-btn {
+  background: transparent; border: 1px solid var(--line); border-radius: 6px;
+  padding: 8px 12px; min-height: 44px; color: var(--text);
+}
+.toolbar-btn:hover { background: #F0EEE8; }
+.toolbar-btn[aria-pressed="true"] { background: var(--primary); color: #fff; border-color: var(--primary); }
+.search-wrap { width: 100%; max-width: 760px; margin: 8px auto 0; }
+.search-wrap input {
+  width: 100%; padding: 12px 14px; font-size: 1rem;
+  border: 2px solid var(--line); border-radius: 6px;
+  background: #fff; color: var(--text); min-height: 44px;
+}
+
+.draft-banner {
+  background: #F4D8D4; color: #7A2118; padding: 10px 16px; text-align: center;
+  font-weight: 600; border-bottom: 2px solid #7A2118;
+}
+.disclaimer-card {
+  background: #FFF8E5; border: 1px solid #E0C97D; border-radius: 8px;
+  padding: 16px; margin: 16px 0;
+}
+.disclaimer-card strong { display: block; margin-bottom: 6px; }
+
+h1 { font-size: 1.6rem; margin: 16px 0 8px; line-height: 1.2; }
+h2 { font-size: 1.3rem; margin: 24px 0 8px; line-height: 1.25; }
+h3 { font-size: 1.1rem; margin: 18px 0 6px; }
+h4 { font-size: 1rem; margin: 14px 0 4px; }
+p { margin: 8px 0; }
+ul, ol { padding-left: 22px; }
+
+.doors { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 16px 0; }
+.door {
+  display: block; background: var(--card); border: 2px solid var(--line); border-radius: 12px;
+  padding: 18px; text-decoration: none; color: var(--text); min-height: 88px;
+}
+.door:hover, .door:focus { border-color: var(--primary); background: #F4F6FB; }
+.door .label { display: block; font-size: 1.15rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+.door .desc { display: block; color: var(--muted); font-size: 0.95rem; }
+
+.event-grid, .topic-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 16px 0; }
+.event-card, .topic-card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+  padding: 14px 16px; text-decoration: none; color: var(--text); min-height: 60px;
+  display: flex; flex-direction: column; justify-content: center;
+}
+.event-card:hover, .topic-card:hover, .event-card:focus, .topic-card:focus { border-color: var(--primary); background: #F4F6FB; }
+.event-card .num { color: var(--primary); font-weight: 700; font-size: 0.9rem; }
+.event-card .title, .topic-card .title { font-weight: 600; font-size: 1.05rem; }
+.topic-card .desc { color: var(--muted); font-size: 0.9rem; margin-top: 2px; }
+
+.chip {
+  display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.78rem;
+  font-weight: 600; letter-spacing: 0.02em; vertical-align: middle; margin: 0 4px 2px 0;
+  cursor: help; border: 1px solid transparent;
+}
+.chip-VERIFIED { background: var(--verified-bg); color: var(--verified-fg); border-color: var(--verified-fg); }
+.chip-PLAUSIBLE { background: var(--plausible-bg); color: var(--plausible-fg); border-color: var(--plausible-fg); }
+.chip-STATE { background: var(--state-bg); color: var(--state-fg); border-color: var(--state-fg); }
+.chip-SPECIFICATION { background: #E8E5F0; color: #4A3C7A; border-color: #4A3C7A; }
+
+.entry { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; margin: 12px 0; }
+.entry h4 { margin-top: 0; }
+.entry .contact-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0; }
+.btn-call, .btn-visit {
+  display: inline-flex; align-items: center; gap: 6px; background: var(--primary);
+  padding: 8px 14px; border-radius: 6px; text-decoration: none; min-height: 44px;
+  font-weight: 600; color: #fff !important;
+}
+.btn-call:hover, .btn-visit:hover { background: var(--primary-hover); }
+.btn-visit { background: #4A4A4A; }
+.btn-visit:hover { background: #2C2C2C; }
+.svg-icon { width: 16px; height: 16px; flex-shrink: 0; }
+
+.see-also { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line); font-size: 0.92rem; color: var(--muted); }
+.see-also strong { color: var(--text); }
+.see-also a {
+  display: inline-block; padding: 4px 8px; margin: 2px; background: #ECEAE0;
+  color: var(--text); border-radius: 4px; text-decoration: none; font-size: 0.85rem;
+}
+.see-also a:hover { background: #D8D6C9; }
+
+.toc { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 16px; margin: 16px 0; }
+.toc summary { cursor: pointer; font-weight: 600; padding: 8px 0; min-height: 44px; display: flex; align-items: center; }
+.toc ul { list-style: none; padding-left: 0; margin: 8px 0; }
+.toc li { padding: 4px 0; }
+.toc a { display: block; padding: 6px 0; color: var(--primary); text-decoration: none; min-height: 32px; }
+.toc a:hover { text-decoration: underline; }
+.section-meta { color: var(--muted); font-size: 0.85rem; margin: 4px 0 12px; }
+
+.calls { counter-reset: callnum; padding-left: 0; list-style: none; }
+.calls > li {
+  counter-increment: callnum; background: var(--card); border-left: 4px solid var(--primary);
+  padding: 12px 14px 12px 44px; margin: 10px 0; border-radius: 4px; position: relative;
+}
+.calls > li::before {
+  content: counter(callnum); position: absolute; left: 12px; top: 12px;
+  background: var(--primary); color: #fff; width: 24px; height: 24px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;
+}
+
+.dir-table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+.dir-table th, .dir-table td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 0.95rem; }
+.dir-table th { background: #ECEAE0; font-weight: 700; }
+.dir-table tr:hover { background: #F4F4EF; }
+.dir-table a.btn-call { padding: 6px 10px; font-size: 0.9rem; min-height: 36px; }
+
+.search-result { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; margin: 8px 0; }
+.search-result .where { color: var(--primary); font-size: 0.85rem; font-weight: 600; }
+.search-result .snippet { font-size: 0.95rem; color: var(--muted); }
+.search-result mark { background: #FFF1A8; padding: 0 2px; }
+.no-results { color: var(--muted); padding: 20px; text-align: center; }
+
+footer.site { border-top: 1px solid var(--line); margin-top: 30px; padding: 16px 0; font-size: 0.85rem; color: var(--muted); }
+footer.site .tagline { text-align: center; margin-top: 8px; font-style: italic; }
+
+.maintenance-panel { background: #FFF8E5; border: 2px solid #E0C97D; border-radius: 8px; padding: 16px; margin: 16px 0; }
+.maintenance-panel h3 { margin-top: 0; }
+.maintenance-panel ul { padding-left: 20px; }
+
+.modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; padding: 16px; }
+.modal-backdrop.open { display: flex; align-items: center; justify-content: center; }
+.modal { background: var(--card); border-radius: 12px; padding: 20px; max-width: 520px; width: 100%; max-height: 90vh; overflow: auto; }
+.modal h3 { margin-top: 0; }
+.modal .close-btn { background: var(--primary); color: #fff; border: none; padding: 10px 16px; border-radius: 6px; min-height: 44px; }
+
+.offline-tag { display: inline-block; background: #F4D8D4; color: #7A2118; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; margin-left: 6px; }
+
+.sidebar { margin: 18px 0; padding: 14px 16px; border-radius: 8px; background: var(--card); border: none; border-left: 4px solid var(--line); }
+.sidebar h3, .sidebar h4 { margin-top: 0; }
+.sidebar p:last-child { margin-bottom: 0; }
+.sidebar.middle-income { border-left-color: #6B8E8E; background: #F0F5F4; }
+.sidebar.middle-income h3, .sidebar.middle-income h4 { color: #324E4E; }
+.sidebar.tribal-elder { border-left-color: #8A6F5A; background: #F5F0EB; }
+.sidebar.tribal-elder h3, .sidebar.tribal-elder h4 { color: #5A4738; }
+
+.orientation { background: #FFF8E5; border-left: 3px solid #E0C97D; padding: 10px 14px; margin: 14px 0; border-radius: 4px; font-style: italic; color: #5A4A1A; }
+
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.skip-link { position: absolute; left: -1000px; top: 0; background: var(--primary); color: #fff; padding: 10px 14px; z-index: 1000; }
+.skip-link:focus { left: 0; }
+
+.back-link {
+  display: inline-block; padding: 8px 14px; background: var(--card); border: 1px solid var(--line);
+  border-radius: 6px; text-decoration: none; color: var(--text); margin: 8px 0 16px; min-height: 44px; font-weight: 600;
+}
+.back-link:hover { background: #ECEAE0; }
+.back-link::before { content: "← "; }
+
+@media (min-width: 600px) {
+  .doors { grid-template-columns: 1fr 1fr 1fr; }
+  .event-grid, .topic-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media print {
+  body { background: #fff; color: #000; font-size: 11pt; }
+  header.site, footer.site, .toolbar-btn, .search-wrap, .draft-banner, .door:not(.print-show),
+  .modal-backdrop, .back-link, .doors, .toc { display: none !important; }
+  .app { max-width: 100%; padding: 0; }
+  a { color: #000; text-decoration: none; }
+  .entry, .calls > li, .event-card, .topic-card { break-inside: avoid; }
+  .btn-call, .btn-visit { border: 1px solid #000; background: #fff !important; color: #000 !important; }
+  .chip { border: 1px solid #000; }
+  .print-page { break-after: page; }
+  .print-page:last-child { break-after: auto; }
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div id="draft-banner-mount"></div>
+
+<header class="site">
+  <div class="bar">
+    <div class="brand">
+      <a href="#" id="home-link">Senior Financial Resources</a>
+      <small>v1.5 · May 04, 2026</small>
+    </div>
+    <button class="toolbar-btn" id="text-toggle" aria-pressed="false" aria-label="Toggle large text">A+</button>
+    <button class="toolbar-btn" id="key-btn" aria-haspopup="dialog" aria-controls="key-modal" aria-label="Show classification key">Classification Key</button>
+  </div>
+  <div class="search-wrap">
+    <label class="sr-only" for="search-input">Search all modules</label>
+    <input type="search" id="search-input" placeholder="Search programs, phone numbers, topics…" autocomplete="off">
+  </div>
+</header>
+
+<main id="main" class="app" role="main">
+  <h1>Senior Financial Resources</h1>
+  <p style="color:var(--muted);font-size:0.95rem;">A reference for U.S. seniors, families, and the people who help them — federal programs, non-profits, event triage, fraud, and long-term care. Pick a door.</p>
+
+  <nav class="doors" aria-label="Main navigation">
+    <a class="door" href="#?view=triage">
+      <span class="label">Something just happened.</span>
+      <span class="desc">Find the right first three calls for fifteen common events.</span>
+    </a>
+    <a class="door" href="#?view=topics">
+      <span class="label">I need help with a topic.</span>
+      <span class="desc">Browse federal programs, non-profits, fraud, long-term care, and quick cards.</span>
+    </a>
+    <a class="door" href="#?view=directory">
+      <span class="label">I just need a phone number.</span>
+      <span class="desc">Searchable directory of every phone number in this stack.</span>
+    </a>
+  </nav>
+
+  <div class="disclaimer-card" role="note">
+    <strong>This is information, not advice.</strong>
+    This stack is a reference, not advice. Eligibility, benefit amounts, and program names change. Before relying on any program described in any module, confirm the current details at the primary source named in that module, or call the listed phone number. Compiled in good faith; errors and omissions are possible.
+  </div>
+
+  <p style="color:var(--muted);font-size:0.9rem;"><em>Last reviewed Monday, May 04, 2026. For the most current information, always confirm at the primary source named for each program.</em></p>
+</main>
+
+<footer class="site">
+  <div class="app">
+    <div id="footer-meta">
+      <div><strong>Senior Financial Resources</strong> · v1.5 · Compiled by Alan Francis · Independent Journalist · Monday, May 04, 2026</div>
+      <div style="margin-top:6px;">This stack is a reference, not advice. Eligibility, benefit amounts, and program names change. Before relying on any program described in any module, confirm the current details at the primary source named in that module, or call the listed phone number. Compiled in good faith; errors and omissions are possible.</div>
+      <div style="margin-top:6px;"><a href="#?view=triage">Event Triage</a> · <a href="#?view=topics">Topics</a> · <a href="#?view=directory">Phone Directory</a> · <a href="#?view=maintenance">Version History</a></div>
+    </div>
+    <div class="tagline">The Architecture of Understanding · AI assists. You decide. Trust but verify.</div>
+  </div>
+</footer>
+
+<div class="modal-backdrop" id="key-modal" role="dialog" aria-modal="true" aria-labelledby="key-modal-title" hidden>
+  <div class="modal">
+    <h3 id="key-modal-title">D2 Classification Key</h3>
+    <p><span class="chip chip-VERIFIED">VERIFIED</span> Confirmed at the named primary source as of the compile date.</p>
+    <p><span class="chip chip-PLAUSIBLE">PLAUSIBLE</span> Consistent across named sources; specifics (eligibility, dollar limits, fund availability) change annually. Confirm at the named source before relying.</p>
+    <p><span class="chip chip-STATE">STATE</span> Program framework is federal; numbers and operational details vary by state. Call your county, state agency, or state SHIP counselor.</p>
+    <p style="margin-top:14px;color:var(--muted);font-size:0.9rem;">A program may be VERIFIED in its framework while a specific income threshold within it is PLAUSIBLE.</p>
+    <button class="close-btn" id="key-close">Close</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var toggle = document.getElementById('text-toggle');
+  var keyBtn = document.getElementById('key-btn');
+  var modal = document.getElementById('key-modal');
+  var closeBtn = document.getElementById('key-close');
+  var lastFocus = null;
+
+  // Large-text mode, remembered per browser.
+  function setLarge(on) {
+    root.classList.toggle('large-text', on);
+    toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+    try { localStorage.setItem('sfr-large-text', on ? '1' : '0'); } catch (e) {}
+  }
+  try { setLarge(localStorage.getItem('sfr-large-text') === '1'); } catch (e) {}
+  toggle.addEventListener('click', function () {
+    setLarge(!root.classList.contains('large-text'));
+  });
+
+  // Classification Key modal.
+  function openModal() {
+    lastFocus = document.activeElement;
+    modal.hidden = false;
+    modal.classList.add('open');
+    closeBtn.focus();
+  }
+  function closeModal() {
+    modal.classList.remove('open');
+    modal.hidden = true;
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  keyBtn.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+  });
+})();
+</script>
+</body>
+</html>
