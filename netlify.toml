@@ -1,0 +1,13 @@
+# Netlify configuration for The Psalms Interactive Map.
+# The app is a single self-contained HTML file with no build step,
+# so Netlify serves the psalms-map folder as-is.
+
+[build]
+  publish = "psalms-map"
+  command = ""
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

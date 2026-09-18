@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Psalms — A Map</title>
+<style>
+:root{
+  --ground:#FCFCFD;
+  --panel:#FFFFFF;
+  --ink:#15171C;
+  --ink-2:#4B525F;
+  --ink-3:#6E7684;
+  --line:#DCE0E6;
+  --line-2:#EDEFF2;
+  --seam:#7B2D26;      /* doxologies, and only doxologies */
+  --taught:#1A6040;    /* ground we have covered */
+  --taught-soft:#E6F1EB;
+  --here:#B8860B;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --sans: "Inter", "Segoe UI", Roboto, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+}
+*{box-sizing:border-box;}
+html{ -webkit-text-size-adjust:100%; scroll-behavior:smooth; }
+@media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} *{transition:none !important; animation:none !important;} }
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit;}
+:focus-visible{ outline:2.5px solid var(--here); outline-offset:2px; border-radius:2px; }
+
+/* ---------------- shell ---------------- */
+.wrap{ max-width:1180px; margin:0 auto; padding:0 18px; }
+
+header.top{
+  position:sticky; top:0; z-index:40; background:rgba(252,252,253,.94);
+  backdrop-filter:saturate(1.2) blur(8px); border-bottom:1px solid var(--line);
+}
+.topbar{ display:flex; align-items:center; gap:14px; padding:10px 0; flex-wrap:wrap; }
+.wordmark{ font-family:var(--serif); font-size:1.15rem; letter-spacing:-.01em; white-space:nowrap; margin-right:auto; }
+.wordmark span{ color:var(--ink-3); font-size:.82rem; font-family:var(--sans); margin-left:8px; }
+.search{
+  flex:1 1 220px; max-width:360px; display:flex; align-items:center; gap:8px;
+  border:1px solid var(--line); background:#fff; border-radius:9px; padding:7px 11px;
+}
+.search input{ border:0; outline:0; font:inherit; font-size:.92rem; width:100%; background:transparent; color:var(--ink); }
+.search svg{ flex:none; }
+.btn{
+  font:inherit; font-size:.86rem; background:#fff; color:var(--ink);
+  border:1px solid var(--line); border-radius:9px; padding:7px 13px; cursor:pointer;
+}
+.btn:hover{ border-color:var(--ink-3); }
+
+/* ---------------- hero: the strip ---------------- */
+.hero{ padding:26px 0 8px; border-bottom:1px solid var(--line); }
+.hero h1{
+  font-family:var(--serif); font-weight:400; font-size:clamp(1.85rem,5.2vw,3.1rem);
+  line-height:1.08; margin:0 0 8px; letter-spacing:-.018em; max-width:20ch;
+}
+.hero p.lede{ margin:0 0 20px; max-width:60ch; color:var(--ink-2); font-size:1rem; }
+
+.stripwrap{ background:var(--panel); border:1px solid var(--line); border-radius:13px; padding:15px 15px 12px; }
+.striphead{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:11px; }
+.striphead h2{ font-size:.95rem; font-weight:600; margin:0; }
+.striphead .hint{ font-size:.8rem; color:var(--ink-3); }
+
+.books{ display:flex; flex-direction:column; gap:9px; }
+.bookrow{ display:grid; grid-template-columns:52px 1fr; gap:10px; align-items:start; }
+.bookrow .tag{
+  font-size:.7rem; color:var(--ink-3); padding-top:5px; line-height:1.25;
+  border-right:1px solid var(--line-2); padding-right:8px; text-align:right;
+}
+.bookrow .tag b{ display:block; color:var(--ink); font-size:.82rem; font-weight:600; }
+.cells{ display:flex; flex-wrap:wrap; gap:3px; }
+.cell{
+  width:21px; height:21px; border-radius:4px; border:1px solid var(--line);
+  background:#fff; color:var(--ink-3); font-size:.56rem; font-family:var(--sans);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;
+  transition:transform .08s ease, background .12s ease, border-color .12s ease;
+}
+.cell:hover{ transform:translateY(-1.5px); border-color:var(--ink-3); }
+@media (max-width:760px){
+  .cell{ width:27px; height:27px; font-size:.62rem; border-radius:5px; }
+  #printbtn{ display:none; }
+  .wordmark span{ display:none; }
+  .bookrow{ grid-template-columns:46px 1fr; gap:8px; }
+  .wrap{ padding:0 13px; }
+}
+.cell.taught{ background:var(--taught); border-color:var(--taught); color:#fff; }
+.cell.here{ background:#fff; border:2px solid var(--here); color:var(--ink); font-weight:700; }
+.cell.match{ box-shadow:0 0 0 2px var(--seam); border-color:var(--seam); }
+.cell.dim{ opacity:.26; }
+.cell.sel{ outline:2.5px solid var(--ink); outline-offset:1px; }
+.seamnote{
+  font-size:.72rem; color:var(--seam); margin-top:4px; font-family:var(--serif); font-style:italic;
+}
+
+.chips{ display:flex; flex-wrap:wrap; gap:7px; margin:13px 0 4px; }
+.chip{
+  font:inherit; font-size:.79rem; border:1px solid var(--line); background:#fff;
+  border-radius:100px; padding:4px 12px; cursor:pointer; color:var(--ink-2);
+}
+.chip:hover{ border-color:var(--ink-3); }
+.chip[aria-pressed="true"]{ background:var(--ink); border-color:var(--ink); color:#fff; }
+/* progress + tonight's action */
+.progress{ margin:14px 0 0; }
+.bar{ height:7px; border-radius:100px; background:var(--line-2); overflow:hidden; }
+.bar span{ display:block; height:100%; background:var(--taught); width:0; transition:width .35s ease; }
+.progress .pl{ display:flex; justify-content:space-between; gap:10px; font-size:.8rem; color:var(--ink-2); margin-bottom:6px; flex-wrap:wrap; }
+.progress .pl b{ color:var(--ink); font-weight:600; }
+.tonight{
+  display:flex; gap:9px; align-items:center; flex-wrap:wrap; margin-top:13px;
+  padding-top:13px; border-top:1px solid var(--line-2);
+}
+.mark{
+  font:inherit; font-size:.92rem; font-weight:600; cursor:pointer; min-height:46px;
+  background:var(--taught); color:#fff; border:1px solid var(--taught);
+  border-radius:10px; padding:11px 18px; flex:1 1 auto;
+}
+.mark:hover{ filter:brightness(1.08); }
+.mark[disabled]{ background:var(--line-2); border-color:var(--line); color:var(--ink-3); cursor:default; }
+.mini{
+  font:inherit; font-size:.8rem; cursor:pointer; background:#fff; color:var(--ink-2);
+  border:1px solid var(--line); border-radius:10px; padding:10px 13px; min-height:46px;
+}
+.mini:hover{ border-color:var(--ink-3); }
+.savenote{ font-size:.76rem; color:var(--ink-3); margin-top:9px; }
+.savenote.warn{ color:var(--seam); }
+.codebox{ display:none; gap:8px; margin-top:10px; flex-wrap:wrap; align-items:center; }
+.codebox.on{ display:flex; }
+.codebox input{
+  flex:1 1 180px; font:inherit; font-size:.85rem; padding:9px 11px; min-height:44px;
+  border:1px solid var(--line); border-radius:9px; background:#fff; color:var(--ink);
+}
+.codebox label{ font-size:.76rem; color:var(--ink-3); flex:1 1 100%; }
+.detail .mark{ margin-top:12px; flex:0 0 auto; }
+.legend{ display:flex; gap:16px; flex-wrap:wrap; font-size:.75rem; color:var(--ink-3); margin-top:11px; padding-top:10px; border-top:1px solid var(--line-2); }
+.legend i{ width:12px; height:12px; border-radius:3px; display:inline-block; vertical-align:-2px; margin-right:5px; border:1px solid var(--line); }
+
+/* ---------------- detail card ---------------- */
+.detail{ margin-top:14px; border:1px solid var(--line); border-left:4px solid var(--taught); border-radius:11px; background:var(--panel); padding:15px 17px; }
+.detail.empty{ border-left-color:var(--line); color:var(--ink-3); font-size:.9rem; }
+.detail h3{ font-family:var(--serif); font-weight:400; font-size:1.5rem; margin:0 0 3px; }
+.detail .sub{ color:var(--ink-3); font-size:.83rem; margin-bottom:11px; }
+.dgrid{ display:grid; gap:10px 26px; grid-template-columns:1fr; }
+@media (min-width:640px){ .dgrid{ grid-template-columns:1fr 1fr; } }
+.dgrid dt{ font-size:.71rem; color:var(--ink-3); letter-spacing:.02em; }
+.dgrid dd{ margin:2px 0 0; font-size:.92rem; }
+.pill{ display:inline-block; font-size:.7rem; border:1px solid var(--ink-2); color:var(--ink-2); border-radius:100px; padding:1px 8px; margin:0 4px 4px 0; }
+.pill.q{ border-color:var(--taught); color:var(--taught); }
+.pill.c{ border-color:var(--seam); color:var(--seam); }
+
+/* ---------------- book sections ---------------- */
+.jump{ position:sticky; top:var(--topH,53px); z-index:30; background:rgba(252,252,253,.94); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); }
+.jump .inner{ display:flex; gap:4px; align-items:center; overflow-x:auto; padding:8px 0; scrollbar-width:none; }
+.jump .inner::-webkit-scrollbar{ display:none; }
+.jump button{
+  font:inherit; font-size:.82rem; white-space:nowrap; padding:7px 13px; cursor:pointer;
+  border-radius:100px; border:1px solid transparent; background:transparent; color:var(--ink-2);
+  min-height:38px;
+}
+.jump button:hover{ border-color:var(--line); }
+.jump button.on{ background:var(--ink); color:#fff; }
+.jump button.on span{ color:rgba(255,255,255,.72) !important; }
+.jump button.home{ border-color:var(--line); color:var(--ink); font-weight:600; flex:none; }
+.jump button.home svg{ vertical-align:-2px; margin-right:5px; }
+
+/* floating return, appears once the map is off screen */
+.tomap{
+  position:fixed; right:14px; z-index:50; display:none; align-items:center; gap:7px;
+  bottom:calc(16px + env(safe-area-inset-bottom, 0px));
+  font:inherit; font-size:.86rem; font-weight:600; cursor:pointer;
+  background:var(--ink); color:#fff; border:0; border-radius:100px;
+  padding:13px 18px; min-height:48px; box-shadow:0 4px 16px rgba(0,0,0,.22);
+}
+.tomap.on{ display:flex; }
+@media print{ .tomap{ display:none !important; } }
+
+.book{ padding:34px 0 8px; border-top:1px solid var(--line-2); scroll-margin-top:calc(var(--topH,53px) + 62px); }
+.book:first-of-type{ border-top:0; }
+.bookhead{ margin-bottom:16px; }
+.bookhead h2{ font-family:var(--serif); font-weight:400; font-size:clamp(1.6rem,4vw,2.3rem); margin:0; letter-spacing:-.015em; }
+.bookhead .rng{ color:var(--ink-3); font-size:1rem; font-family:var(--sans); margin-left:10px; }
+.bookhead .strap{ font-family:var(--serif); font-style:italic; color:var(--ink-2); margin:7px 0 0; max-width:66ch; }
+
+.seambox{ border-left:4px solid var(--seam); padding:3px 0 3px 15px; margin:16px 0 20px; }
+.seambox .lab{ font-size:.73rem; color:var(--seam); margin-bottom:3px; }
+.seambox .vs{ font-family:var(--serif); font-size:1.08rem; line-height:1.5; }
+.seambox .vs b{ font-weight:600; }
+.seambox .why{ font-size:.88rem; color:var(--ink-2); margin-top:7px; max-width:70ch; }
+
+.cols{ display:grid; gap:18px; grid-template-columns:1fr; }
+@media (min-width:760px){ .cols{ grid-template-columns:1fr 1fr; gap:22px 30px; } }
+@media (min-width:1060px){ .cols{ grid-template-columns:1fr 1fr 1fr; } }
+.card{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:15px 17px; }
+.card h3{ font-size:.93rem; font-weight:600; margin:0 0 9px; padding-bottom:7px; border-bottom:1px solid var(--line-2); }
+.card p{ margin:0 0 8px; font-size:.92rem; color:var(--ink-2); }
+.card p:last-child{ margin-bottom:0; }
+.card strong{ color:var(--ink); font-weight:600; }
+.rows{ display:flex; flex-direction:column; }
+.row{ display:grid; grid-template-columns:auto 1fr; gap:4px 12px; padding:6px 0; border-bottom:1px solid var(--line-2); font-size:.89rem; }
+.row:last-child{ border-bottom:0; }
+@media (max-width:480px){ .row{ grid-template-columns:1fr; } }
+.row .k{ font-weight:600; white-space:nowrap; }
+.row .v{ color:var(--ink-2); }
+.row .k em{ font-family:var(--serif); font-style:italic; font-weight:400; }
+
+.ex{ border-left:2px solid var(--line); padding-left:12px; margin:0 0 11px; }
+.ex .t{ font-size:.72rem; color:var(--ink-3); display:block; margin-bottom:2px; }
+.ex .q{ font-family:var(--serif); font-size:.98rem; line-height:1.5; }
+.tryit{ font-size:.88rem; color:var(--ink); background:var(--line-2); border-radius:8px; padding:9px 11px; margin-top:4px; }
+
+.ntrow{ display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px solid var(--line-2); font-size:.88rem; align-items:baseline; flex-wrap:wrap; }
+.ntrow:last-of-type{ border-bottom:0; }
+.ntrow .l{ color:var(--ink-2); }
+.ntrow .l b{ color:var(--ink); }
+
+.care{ border:1px solid var(--seam); border-radius:12px; padding:14px 16px; background:#fff; }
+.care h3{ color:var(--seam); border-bottom-color:rgba(123,45,38,.2); }
+.care p{ color:var(--ink); }
+
+footer.end{ border-top:1px solid var(--line); margin-top:40px; padding:22px 0 46px; font-size:.82rem; color:var(--ink-3); }
+footer.end p{ margin:0 0 5px; max-width:78ch; }
+
+.hidden{ display:none !important; }
+.noresult{ padding:24px 0; color:var(--ink-3); }
+
+/* ---------------- print: falls back to the five sheets ---------------- */
+@media print{
+  @page{ size:Letter; margin:12mm 13mm; }
+  :root{ --seam:#4a3813; --taught:#4a3813; --line:#767676; --line-2:#c9c9c9; --ink-2:#333; --ink-3:#3a3a3a; }
+  header.top, .jump, .chips, .legend, .stripwrap, .detail, .hero p.lede, .btn{ display:none !important; }
+  body{ background:#fff; font-size:9.5pt; }
+  .wrap{ max-width:none; padding:0; }
+  .hero{ display:none; }
+  .book{ page-break-after:always; page-break-inside:avoid; padding:0; border:0; }
+  .book:last-of-type{ page-break-after:auto; }
+  .cols{ grid-template-columns:1fr 1fr; gap:10pt 14pt; }
+  .card, .care{ border:.7pt solid #767676; border-radius:0; padding:7pt 9pt; page-break-inside:avoid; }
+  .seambox{ border-left:3pt solid #4a3813; }
+  .tryit{ background:none; border:.7pt solid #767676; }
+  .cell{ display:none; }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap topbar">
+    <div class="wordmark">The Psalms <span>a map for the class</span></div>
+    <label class="search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6E7684" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input id="q" type="search" placeholder="Search a psalm number, a name, a word" aria-label="Search the map">
+    </label>
+    <button class="btn" id="printbtn">Print the five sheets</button>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <div class="wrap">
+    <h1>One hundred and fifty poems, in five books.</h1>
+    <p class="lede">The five books are not a study aid somebody added later. Four of them end with a short burst of praise that belongs to no psalm's argument — a doxology, stitched on. Find the seam and you have found the division. Tap any psalm below.</p>
+
+    <div class="stripwrap">
+      <div class="striphead">
+        <h2 id="stripTitle">All 150</h2>
+        <span class="hint" id="stripHint">Green is what we have learned so far. Gold is next.</span>
+      </div>
+
+      <div class="books" id="strip"></div>
+
+      <div class="chips" id="chips" role="group" aria-label="Filter the psalms"></div>
+      <div class="progress">
+        <div class="pl"><span id="pcount"></span><span id="pnext"></span></div>
+        <div class="bar"><span id="pbar"></span></div>
+      </div>
+
+      <div class="tonight">
+        <button class="mark" id="marknext" type="button"></button>
+        <button class="mini" id="undo" type="button">Undo the last one</button>
+        <button class="mini" id="codetoggle" type="button">Move progress to another device</button>
+      </div>
+      <div class="codebox" id="codebox">
+        <label for="code">Copy this code to carry progress to another phone, or paste one in and press Load.</label>
+        <input id="code" type="text" inputmode="text" aria-label="Progress code">
+        <button class="mini" id="loadcode" type="button">Load</button>
+      </div>
+      <div class="savenote" id="savenote"></div>
+
+      <div class="legend">
+        <span><i style="background:#1A6040;border-color:#1A6040"></i>Learned</span>
+        <span><i style="border:2px solid #B8860B"></i>Next up tonight</span>
+        <span><i></i>Still ahead</span>
+      </div>
+
+      <div class="detail empty" id="detail" aria-live="polite">Pick a psalm and its details appear here.</div>
+    </div>
+  </div>
+</section>
+
+<nav class="jump" aria-label="Jump to a book">
+  <div class="wrap inner" id="jump"></div>
+</nav>
+
+<div class="wrap" id="bookwrap"></div>
+<div class="wrap noresult hidden" id="noresult">Nothing on the map matches that. Try a psalm number, a name like Asaph, or a word like acrostic.</div>
+</main>
+
+<button class="tomap" id="tomap" type="button">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+  Back to the map
+</button>
+
+<footer class="end">
+  <div class="wrap">
+    <p>English text throughout is the King James Version. Names and counts follow the Hebrew headings.</p>
+    <p>Every New Testament reference on this page is marked <span class="pill q">quoted</span> when the writer prints the psalm's words, and <span class="pill c">convergence</span> when he does not. Keeping those apart is the habit the whole map is built to teach. Quotation-versus-convergence test — Alan Francis, Architecture of Understanding.</p>
+    <p>Psalms Systematic Study Series. Verify the cross-references against your own text before teaching them.</p>
+  </div>
+</footer>
+
+<script>
+/* ============================ DATA ============================ */
+const range=(a,b)=>Array.from({length:b-a+1},(_,i)=>a+i);
+
+const AUTHORS={};
+const put=(name,list)=>list.forEach(n=>AUTHORS[n]=(AUTHORS[n]||[]).concat(name));
+put("David",[...range(3,9),...range(11,32),...range(34,41)]);
+put("David",[...range(51,65),...range(68,70),86,101,103,108,109,110,122,124,131,133,...range(138,145)]);
+put("Sons of Korah",[42,44,45,46,47,48,49,84,85,87,88]);
+put("Asaph",[50,...range(73,83)]);
+put("Solomon",[72,127]);
+put("Moses",[90]);
+put("Heman the Ezrahite",[88]);
+put("Ethan the Ezrahite",[89]);
+
+const NT={
+ 2:["Acts 4:25–26","Acts 13:33","Heb 1:5"],8:["Matt 21:16","Heb 2:6–8"],16:["Acts 2:25–28"],
+ 22:["Matt 27:46","John 19:24"],31:["Luke 23:46"],32:["Rom 4:7–8"],34:["John 19:36"],
+ 40:["Heb 10:5–7"],41:["John 13:18"],45:["Heb 1:8–9"],51:["Rom 3:4"],68:["Eph 4:8"],
+ 69:["John 2:17","Rom 15:3","Rom 11:9–10","Acts 1:20"],78:["Matt 13:35"],82:["John 10:34"],
+ 89:["Acts 13:22 (blended with 1 Sam 13:14)"],91:["Matt 4:6 — quoted by Satan"],94:["1 Cor 3:20"],
+ 95:["Heb 3:7–11","Heb 4:3, 5, 7"],102:["Heb 1:10–12"],104:["Heb 1:7"],109:["Acts 1:20"],
+ 110:["Matt 22:44","Mark 12:36","Luke 20:42–43","Acts 2:34–35","Heb 1:13","Heb 5:6","Heb 7:17"],
+ 116:["2 Cor 4:13"],117:["Rom 15:11"],118:["Matt 21:42","Matt 21:9","Acts 4:11","1 Pet 2:7"]
+};
+const CONV={67:["Matt 25:31–34 — its centre asks God to govern the nations; Matthew shows all nations before a throne"]};
+
+const SETS={
+  acrostic:{label:"Acrostic",list:[9,10,25,34,37,111,112,119,145]},
+  penitential:{label:"Penitential",list:[6,32,38,51,102,130,143]},
+  ascents:{label:"Song of Degrees",list:range(120,134)},
+  hallel:{label:"The Hallel",list:range(113,118)},
+  imprecatory:{label:"Imprecatory",list:[58,69,79,83,109,137]},
+  elohistic:{label:"Leans on “God” rather than the personal name",list:range(42,83)}
+};
+const DEFAULT_TAUGHT=range(1,66);
+const KEY='psalms-map-progress-v1';
+let storageOK=true;
+try{ localStorage.setItem(KEY+'-t','1'); localStorage.removeItem(KEY+'-t'); }catch(e){ storageOK=false; }
+
+function loadTaught(){
+  if(storageOK){
+    try{ const v=localStorage.getItem(KEY); if(v) return new Set(JSON.parse(v)); }catch(e){}
+  }
+  return new Set(DEFAULT_TAUGHT);
+}
+function saveTaught(){
+  if(!storageOK) return;
+  try{ localStorage.setItem(KEY,JSON.stringify([...taught].sort((a,b)=>a-b))); }
+  catch(e){ storageOK=false; renderProgress(); }
+}
+let taught=loadTaught();
+let lastMarked=null;
+const isTaught=n=>taught.has(n);
+function nextUp(){ for(let n=1;n<=150;n++) if(!taught.has(n)) return n; return null; }
+
+/* a compact code like 1-66,70 so progress can move between phones */
+function toCode(){
+  const a=[...taught].sort((x,y)=>x-y), out=[]; let i=0;
+  while(i<a.length){ let j=i; while(j+1<a.length&&a[j+1]===a[j]+1) j++;
+    out.push(i===j?String(a[i]):a[i]+'-'+a[j]); i=j+1; }
+  return out.join(',');
+}
+function fromCode(str){
+  const set=new Set();
+  String(str).split(',').forEach(p=>{
+    p=p.trim(); if(!p) return;
+    const m=p.match(/^(\d+)\s*-\s*(\d+)$/);
+    if(m){ const a=+m[1],b=+m[2]; for(let n=Math.min(a,b);n<=Math.max(a,b);n++) if(n>=1&&n<=150) set.add(n); }
+    else { const n=parseInt(p,10); if(n>=1&&n<=150) set.add(n); }
+  });
+  return set;
+}
+
+const BOOKS=[
+ {n:1,name:"Book One",range:"Psalms 1–41",from:1,to:41,
+  strap:"The righteous and the wicked, one man's prayers under pressure, and the two untitled psalms that open the door.",
+  seamRef:"Psalm 41:13",
+  seam:"Blessed be the L<span style='font-variant:small-caps'>ord</span> God of Israel from everlasting, and to everlasting. Amen, and Amen.",
+  why:"The first seam. It has nothing to do with Psalm 41's argument, which is about a sick man and a friend who turned on him. That is how you can tell it was added to close a collection.",
+  who:[["David","37 of the 41 — Psalms 3–9, 11–32, 34–41"],["No name","1, 2, 10, 33"]],
+  whoNote:"Psalms 1 and 2 stand untitled at the front on purpose: one sets the two ways a life can go, the other sets God's king on the holy hill. Everything after is read between them. Psalm 10 has no heading because in Hebrew it is the second half of Psalm 9 — the two share one alphabet running down the left edge.",
+  kinds:[["Lament","3, 13, 22, 38 — the largest single kind in the Psalter"],["Hymn of praise","8, 19, 29, 33"],["Thanksgiving","30, 34, 40"],["Trust","23, 27"],["Wisdom and Torah","1, 19, 37"],["Royal","2, 18, 20, 21"],["Penitential","6, 32, 38"],["Acrostic","9–10, 25, 34, 37"]],
+  words:[["<em>Mizmor</em> — “A Psalm”","A song with instruments. The book names its own genre."],["“To the chief Musician”","A performance direction. Someone ran the music."],["<em>Neginoth</em>","On stringed instruments (4, 6)."],["<em>Selah</em>","First at 3:2, and inside the poem rather than the heading. Nobody is certain what it asked the singers to do. Say so, and leave it there."]],
+  device:{title:"How the poetry works — parallelism",
+   intro:"Hebrew poems do not rhyme sounds. They rhyme thoughts: a line says something, and the next line answers it. Learn the three answers and you can read any psalm in any translation.",
+   ex:[["The second line says it again","“The heavens declare the glory of God; <b>and</b> the firmament sheweth his handywork.” — 19:1"],
+       ["The second line says the opposite","“For the L<span style='font-variant:small-caps'>ord</span> knoweth the way of the righteous: <b>but</b> the way of the ungodly shall perish.” — 1:6"],
+       ["The second line takes a step further","“…walketh not in the counsel of the ungodly, <b>nor standeth</b> in the way of sinners, <b>nor sitteth</b> in the seat of the scornful.” — 1:1. Walk, stand, sit: it settles in."]],
+   tryit:"Open any psalm on this page, read two lines, and say which of the three you are looking at."},
+  nt:[[2,"Acts 13:33; Heb 1:5","q"],[8,"Matt 21:16; Heb 2:6–8","q"],[16,"Acts 2:25–28","q"],[22,"Matt 27:46; John 19:24","q"],[31,"Luke 23:46","q"],[32,"Rom 4:7–8","q"],[34,"John 19:36","q"],[40,"Heb 10:5–7","q"],[41,"John 13:18","q"]],
+  ntNote:"",
+  care:"You will hear it said that the Psalms were “written mainly by David.” In this book that is true — 37 of 41. Across all 150 it is not: David is named in fewer than half. Asaph, the sons of Korah, Solomon, Moses, Ethan and Heman are named too, and dozens carry no name at all.",
+  where:"Behind us. We have learned all 41, in order."},
+
+ {n:2,name:"Book Two",range:"Psalms 42–72",from:42,to:72,
+  strap:"New voices join David — and the name of God quietly changes.",
+  seamRef:"Psalm 72:18–19",
+  seam:"Blessed be the L<span style='font-variant:small-caps'>ord</span> God, the God of Israel, who only doeth wondrous things. And blessed be his glorious name for ever… Amen, and Amen.",
+  why:"Then 72:20: “The prayers of David the son of Jesse are ended.” A closing note from an editor, and visible proof that somebody collected and arranged these poems. David still appears later in the Psalter, so the note marks the end of a collection, not the end of David.",
+  who:[["Sons of Korah","42, 44–49 — a temple singing guild, not one man"],["Asaph","50, his only one here; the rest are in Book Three"],["David","51–65, 68–70"],["Solomon","72"],["No name","43, 66, 67, 71"]],
+  whoNote:"Psalm 43 has no heading because it is the back half of Psalm 42 — one refrain runs through both, three times. And 66 and 67 are the first pair of nameless psalms since 1 and 2, sitting in the middle of a run of David's.",
+  kinds:[["Longing","42–43, 63"],["Communal lament","44, 60 — “we,” not “I”"],["Zion song","46, 48"],["Penitential","51"],["Royal and wedding","45, 72"],["Praise","65, 66, 67 — the run we are in now"]],
+  words:[["<em>Maschil</em>","“Instruction” — a psalm that means to teach (42, 44, 45, 52–55)."],["<em>Michtam</em>","Meaning uncertain (56–60). Do not pretend otherwise."],["Jeduthun","39, 62 — a music director, not an author. A name in a heading is not automatically the writer."],["“When Nathan came…”","51, 52, 54, 56, 57, 59, 60 and 63 carry a historical note tying the psalm to an event in Samuel."]],
+  device:{title:"How the poetry works — the name of God",
+   intro:"Your King James Bible prints two different words at the same size but not in the same shape. L<span style='font-variant:small-caps'>ord</span> in small capitals is the personal name, YHWH, the name given at the bush. Lord in ordinary type is Adonai, a title meaning master. God is Elohim, the general word for deity.",
+   ex:[["What changes here","From Psalm 42 to Psalm 83 the psalms lean heavily on <b>God</b> and use the personal name sparingly. You can watch it happen in English without knowing a word of Hebrew. Just follow the capitals."],
+       ["The proof sits in plain sight","Psalm 14 and Psalm 53 are the same psalm twice. Read them side by side: Psalm 14 says L<span style='font-variant:small-caps'>ord</span>, Psalm 53 says God. Same poem, different name."],
+       ["Why is an open question","It may be a deliberate reach toward the nations, who did not know the covenant name. It may be an editor's house style across those forty-two psalms. Hold both. Do not sell one."]],
+   tryit:"Never ask anyone to see something only visible in Hebrew. Teach the small capitals first, then ask."},
+  nt:[[45,"Heb 1:8–9","q"],[51,"Rom 3:4","q"],[68,"Eph 4:8","q"],[69,"John 2:17; Rom 15:3; Rom 11:9–10; Acts 1:20","q"],[67,"Matt 25:31–34","c"]],
+  ntNote:"That last line is the one to argue about. No New Testament writer quotes Psalm 67. Its centre asks God to govern the nations; Matthew 25 shows all nations gathered before a throne. That is a convergence — teachable as a pattern, not provable as a prophecy.",
+  care:"A name at the top of a psalm is joined to it by one small Hebrew letter that can mean by, for, about, or belonging to. “A Psalm of David” may be David's own, written for him, or from his collection. The headings are ancient and worth trusting. They are just not as flat as they look in English.",
+  where:"We have learned 42 through 66. Psalm 67 is next — and the seventh nameless psalm in the Psalter so far."},
+
+ {n:3,name:"Book Three",range:"Psalms 73–89",from:73,to:89,
+  strap:"The shortest book and the darkest. Seventeen psalms asking whether God kept his word.",
+  seamRef:"Psalm 89:52",
+  seam:"Blessed be the L<span style='font-variant:small-caps'>ord</span> for evermore. Amen, and Amen.",
+  why:"Read what comes immediately before it. Psalm 89 spends fifty-one verses on God's promise to David and then on the wreckage of that promise — “thou hast profaned his crown by casting it to the ground.” The doxology lands on top of an unanswered protest. That is the book's whole shape in one page.",
+  who:[["Asaph","73–83, eleven in a row"],["Sons of Korah","84, 85, 87, 88"],["David","86, one only"],["Heman the Ezrahite","88"],["Ethan the Ezrahite","89"]],
+  whoNote:"Every psalm in Book Three carries a name. It is the only book of which that is true — and the only book where David is nearly absent. Psalm 83 is also the last of the stretch that leaned on “God” rather than the personal name. From 84 onward the capitals come back.",
+  kinds:[["Wisdom under strain","73 — why do the wicked prosper"],["Communal lament","74, 79, 80 — the sanctuary burned"],["Imprecatory","83 — a psalm asking God to act against enemies by name"],["Zion song","84, 87"],["Lament with no resolution","88"],["Covenant complaint","89"]],
+  words:[["Ezrahite","A family or clan name (88, 89) — the only two psalms carrying it."],["<em>Al-taschith</em>","“Destroy not” — almost certainly a tune (75)."],["<em>Shoshannim-Eduth</em>","Another tune name (80). Tune names tell you these were sung, not read."],["<em>Mahalath Leannoth</em>","88 — and nobody can tell you for certain what it meant."]],
+  device:{title:"How the poetry works — the shape of a lament",
+   intro:"Most laments move through five moves, in order: address (“O God”), complaint (this is what is wrong), petition (this is what I am asking), a turn to trust (but I have known you), and a vow of praise (I will tell of it).",
+   ex:[["Psalm 88 stops at the third move","It never turns. The last words of the psalm are “…and mine acquaintance into darkness.” No resolution, no vow. Scripture gives a voice to the prayer that gets no answer, and does not scold it."]],
+   tryit:"Mark the five moves in Psalm 74. Then look for them in Psalm 88 and name the one that is missing."},
+  nt:[[78,"Matt 13:35","q"],[82,"John 10:34","q"],[89,"Acts 13:22","q"]],
+  ntNote:"Acts 13:22 is worth stopping on. Paul welds Psalm 89:20 together with 1 Samuel 13:14 into a single sentence. New Testament writers sometimes quote two texts as one, so when a footnote lists two references for one quotation, that is what happened.",
+  care:"The bold heading printed above a psalm in your Bible — “A cry for deliverance,” “The Messiah's reign” — was written by the publisher, not by Scripture. It is somebody's summary and it can be wrong. The Hebrew heading, “Maschil of Asaph,” is part of the text. The English one in larger type is not.",
+  where:"Ahead of us."},
+
+ {n:4,name:"Book Four",range:"Psalms 90–106",from:90,to:106,
+  strap:"Book Three asked whether God had abandoned the throne. Book Four answers: the Lord reigns, and has, since before the mountains.",
+  seamRef:"Psalm 106:48",
+  seam:"Blessed be the L<span style='font-variant:small-caps'>ord</span> God of Israel from everlasting to everlasting: and let all the people say, Amen. Praise ye the L<span style='font-variant:small-caps'>ord</span>.",
+  why:"This same verse appears in 1 Chronicles 16:36, where the people say the Amen out loud. The doxology was not a literary flourish. It was a line a congregation answered.",
+  who:[["Moses","90 — the only psalm in all 150 ascribed to him"],["David","101, 103"],["No name","the other fourteen"]],
+  whoNote:"Book Four is the most anonymous stretch of the Psalter. After a book in which every psalm had an author, the voices go quiet and the subject becomes God's own kingship rather than any man's. Psalm 102 has a heading with no name in it at all: “A Prayer of the afflicted, when he is overwhelmed.” A description of a condition, offered to anyone in it.",
+  kinds:[["Enthronement","93, 95–99 — “The L<span style='font-variant:small-caps'>ord</span> reigneth”"],["Wisdom on mortality","90"],["Creation praise","104"],["History retold","105 and 106 — what God did, then what Israel did; a deliberate pair"],["Individual lament","102"]],
+  words:[["<em>Tephillah</em> — “A Prayer”","90 and 102. A different label from “Psalm”: this one is spoken, not necessarily sung."],["“…the man of God”","90 — the same title Deuteronomy gives Moses."],["No heading at all","Fourteen of the seventeen. Silence in the heading is itself information."]],
+  device:{title:"How the poetry works — refrain and bookend",
+   intro:"A Hebrew poet has no bold type. To tell you what a psalm is about, he repeats a line, often at both ends, so the whole poem sits inside it.",
+   ex:[["The bookend","Psalm 103 opens “Bless the L<span style='font-variant:small-caps'>ord</span>, O my soul” and closes with the same words. Everything between is the reason."],
+       ["The drumbeat","“The L<span style='font-variant:small-caps'>ord</span> reigneth” opens 93, 97 and 99, and the idea drives 95 through 98. Six psalms hammering one sentence, immediately after a book that ended with a crown thrown to the ground."]],
+   tryit:"Find the repeated line in Psalm 107 and count how many times it returns."},
+  nt:[[91,"Matt 4:6","q"],[94,"1 Cor 3:20","q"],[95,"Heb 3:7–11; 4:3, 5, 7","q"],[102,"Heb 1:10–12","q"],[104,"Heb 1:7","q"]],
+  ntNote:"Psalm 91 is quoted by Satan in the wilderness, accurately and out of its setting. A correct quotation is not the same as a right use of one. That lesson belongs on this page more than any other.",
+  care:"People say the Psalms were composed “from the fifteenth century BC.” That early date rests on one thing — Moses as the author of Psalm 90 — and on an early date for the Exodus. Both are positions, not settled facts. Say where the number comes from and it stops being a claim you have to defend blind.",
+  where:"Ahead of us."},
+
+ {n:5,name:"Book Five",range:"Psalms 107–150",from:107,to:150,
+  strap:"The longest book. A people back from exile, walking uphill to the temple, and one verse the New Testament cannot stop quoting.",
+  seamRef:"Psalm 150:6",
+  seam:"Let every thing that hath breath praise the L<span style='font-variant:small-caps'>ord</span>. Praise ye the L<span style='font-variant:small-caps'>ord</span>.",
+  why:"Books One to Four end with a doxology bolted onto the last psalm. Book Five ends with five whole psalms of it, 146 to 150, each opening and closing with “Praise ye the Lord.” The book of Psalms does not conclude. It opens out.",
+  who:[["David","108–110, 122, 124, 131, 133, 138–145"],["Solomon","127"],["No name","most of the rest, including all of 111–119"]],
+  whoNote:"David reappears here, generations after his death, inside a book that plainly knows the exile. The Psalter was still being gathered long after its most famous contributor was gone.",
+  kinds:[["The Hallel","113–118, sung at Passover; very likely the hymn of Matthew 26:30"],["Psalm 119","The longest chapter in the Bible: 22 stanzas of 8 verses, one stanza per Hebrew letter"],["Song of Degrees","120–134, fifteen short psalms for pilgrims climbing to Jerusalem"],["Acrostic","111, 112, 119, 145"],["Imprecatory","109, 137"],["Final Hallel","146–150, the closing doxology"]],
+  words:[["<em>Shir hamma'aloth</em>","“A Song of Degrees,” or of ascents — the climb to the temple (120–134)."],["“Praise ye the L<span style='font-variant:small-caps'>ord</span>”","<em>Hallelujah</em>, printed as a line of the psalm rather than a heading."],["“For Solomon”","127, in the middle of the pilgrim songs."]],
+  device:{title:"How the poetry works — the alphabet as a frame",
+   intro:"An acrostic runs the Hebrew alphabet down the left-hand edge: each verse, or each stanza, begins with the next letter. English cannot show it, so your Bible prints the letter names above the stanzas of Psalm 119 instead.",
+   ex:[["Why a poet would do it","It signals completeness — this subject covered from A to Z — and it makes the psalm learnable by heart. Psalm 119 is 176 verses in praise of God's word, built so a child could memorise it in blocks of eight."]],
+   tryit:"Look at the stanza headings in Psalm 119 in your own Bible and count them. Twenty-two, the number of letters in the Hebrew alphabet."},
+  nt:[[109,"Acts 1:20","q"],[110,"Matt 22:44; Mark 12:36; Luke 20:42–43; Acts 2:34–35; Heb 1:13","q"],[110,"Heb 5:6; 7:17","q"],[116,"2 Cor 4:13","q"],[117,"Rom 15:11","q"],[118,"Matt 21:42; 21:9; Acts 4:11; 1 Pet 2:7","q"]],
+  ntNote:"No psalm is quoted in the New Testament more than Psalm 110. At his trial, asked directly whether he was the Christ, Jesus answers by putting Psalm 110:1 and Daniel 7:13 into one sentence — sitting on the right hand of power, coming in the clouds (Matt 26:64). That is a quotation, under oath, and the court understood it perfectly.",
+  care:"Psalm 137 begins by the rivers of Babylon, which puts part of this book in the sixth century BC or later. So when a chart says the Psalms were written “from the fifteenth to the fifth century BC,” both ends of that range are arguments — the early end from Moses at Psalm 90, the late end from psalms like this one. The range is a conclusion, not a measurement.",
+  where:"Ahead of us."}
+];
+
+/* ============================ HELPERS ============================ */
+const bookOf=n=>BOOKS.find(b=>n>=b.from&&n<=b.to);
+const setsOf=n=>Object.values(SETS).filter(s=>s.list.includes(n)).map(s=>s.label);
+const authorsOf=n=>AUTHORS[n]||[];
+
+/* ============================ STRIP ============================ */
+const strip=document.getElementById('strip');
+BOOKS.forEach(b=>{
+  const row=document.createElement('div'); row.className='bookrow';
+  const tag=document.createElement('div'); tag.className='tag';
+  tag.innerHTML=`<b>Book ${['One','Two','Three','Four','Five'][b.n-1]}</b>${b.from}–${b.to}`;
+  const cells=document.createElement('div'); cells.className='cells';
+  range(b.from,b.to).forEach(n=>{
+    const c=document.createElement('button');
+    c.className='cell';
+    c.textContent=n; c.dataset.n=n; c.type='button';
+    c.setAttribute('aria-label','Psalm '+n);
+    cells.appendChild(c);
+  });
+  const wrapC=document.createElement('div');
+  wrapC.appendChild(cells);
+  const s=document.createElement('div'); s.className='seamnote';
+  s.textContent='seam: '+b.seamRef;
+  wrapC.appendChild(s);
+  row.appendChild(tag); row.appendChild(wrapC); strip.appendChild(row);
+});
+
+/* ============================ FILTER CHIPS ============================ */
+const FILTERS=[
+  {id:'all',label:'All 150',test:()=>true},
+  {id:'nt',label:'Quoted in the New Testament',test:n=>!!NT[n]},
+  {id:'noname',label:'No name in the heading',test:n=>authorsOf(n).length===0},
+  {id:'david',label:'David',test:n=>authorsOf(n).includes('David')},
+  {id:'acrostic',label:'Acrostic',test:n=>SETS.acrostic.list.includes(n)},
+  {id:'penitential',label:'Penitential',test:n=>SETS.penitential.list.includes(n)},
+  {id:'imprecatory',label:'Imprecatory',test:n=>SETS.imprecatory.list.includes(n)},
+  {id:'ascents',label:'Songs of Degrees',test:n=>SETS.ascents.list.includes(n)},
+  {id:'elohistic',label:'Leans on “God”',test:n=>SETS.elohistic.list.includes(n)}
+];
+let active='all';
+const chips=document.getElementById('chips');
+FILTERS.forEach(f=>{
+  const b=document.createElement('button');
+  b.className='chip'; b.type='button'; b.textContent=f.label;
+  b.setAttribute('aria-pressed',f.id===active);
+  b.onclick=()=>{ active=f.id; paint(); };
+  b.dataset.id=f.id; chips.appendChild(b);
+});
+
+function paint(){
+  const f=FILTERS.find(x=>x.id===active), nx=nextUp();
+  document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.id===active));
+  let count=0;
+  document.querySelectorAll('.cell').forEach(c=>{
+    const n=+c.dataset.n, on=f.test(n);
+    c.classList.toggle('dim',!on); if(on) count++;
+    c.classList.toggle('taught',isTaught(n));
+    c.classList.toggle('here',n===nx);
+    c.setAttribute('aria-label','Psalm '+n+(isTaught(n)?', learned':(n===nx?', next up':'')));
+  });
+  document.getElementById('stripTitle').textContent = active==='all' ? 'All 150' : f.label+' — '+count;
+  document.getElementById('stripHint').textContent = active==='all'
+    ? 'Green is what we have learned so far. Gold is the one coming next.'
+    : 'Tap any highlighted psalm for its details.';
+  renderProgress();
+}
+
+function renderProgress(){
+  const nx=nextUp(), n=taught.size;
+  document.getElementById('pcount').innerHTML=`<b>${n}</b> of 150 learned`;
+  document.getElementById('pnext').textContent = nx ? 'Next up: Psalm '+nx : 'The whole Psalter is behind you.';
+  document.getElementById('pbar').style.width=(n/150*100)+'%';
+  const mk=document.getElementById('marknext');
+  if(nx){ mk.textContent='We learned Psalm '+nx+' tonight'; mk.disabled=false; }
+  else { mk.textContent='Every psalm is marked learned'; mk.disabled=true; }
+  document.getElementById('undo').disabled=!lastMarked;
+  const note=document.getElementById('savenote');
+  note.className='savenote'+(storageOK?'':' warn');
+  note.textContent= storageOK
+    ? 'Your progress is saved on this device and stays here until you change it.'
+    : 'This viewer will not let the page save. Progress holds while the page is open — copy the code below before you close it.';
+  const codeEl=document.getElementById('code');
+  if(codeEl && document.activeElement!==codeEl) codeEl.value=toCode();
+}
+
+function setTaught(n,on){
+  if(on) taught.add(n); else taught.delete(n);
+  lastMarked = on ? n : null;
+  saveTaught(); paint();
+  const cell=document.querySelector(`.cell[data-n="${n}"]`);
+  if(cell && cell.classList.contains('sel')) show(n);
+}
+
+/* ============================ DETAIL ============================ */
+const detail=document.getElementById('detail');
+strip.addEventListener('click',e=>{
+  const c=e.target.closest('.cell'); if(!c) return;
+  document.querySelectorAll('.cell.sel').forEach(x=>x.classList.remove('sel'));
+  c.classList.add('sel');
+  show(+c.dataset.n);
+});
+function show(n){
+  const b=bookOf(n), a=authorsOf(n), s=setsOf(n), q=NT[n], cv=CONV[n];
+  detail.classList.remove('empty');
+  detail.innerHTML=`
+    <h3>Psalm ${n}</h3>
+    <div class="sub">${b.name}, ${b.range}${isTaught(n)?' — learned':(n===nextUp()?' — next up':' — ahead of us')}</div>
+    <dl class="dgrid">
+      <div><dt>Named in the heading</dt><dd>${a.length?a.join(', '):'No name given'}</dd></div>
+      <div><dt>Belongs to</dt><dd>${s.length?s.join(' · '):'No named collection'}</dd></div>
+      <div><dt>In the New Testament</dt><dd>${
+        q?q.map(x=>`<span class="pill q">quoted</span>${x}`).join('<br>')
+         :(cv?cv.map(x=>`<span class="pill c">convergence</span>${x}`).join('<br>')
+             :'Not quoted by any New Testament writer')}</dd></div>
+      <div><dt>This book closes at</dt><dd>${b.seamRef}</dd></div>
+    </dl>
+    <button class="mark" type="button" id="toggleTaught" data-n="${n}" ${isTaught(n)?'style="background:#fff;color:var(--taught);"':''}>
+      ${isTaught(n)?'Learned — tap to unmark':'Mark Psalm '+n+' as learned'}
+    </button>`;
+  document.getElementById('toggleTaught').onclick=()=>setTaught(n,!isTaught(n));
+}
+
+/* ============================ BOOK PANELS ============================ */
+const rowsHTML=a=>`<div class="rows">${a.map(([k,v])=>`<div class="row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join('')}</div>`;
+const bw=document.getElementById('bookwrap');
+bw.innerHTML=BOOKS.map(b=>`
+<section class="book" id="book${b.n}" data-book="${b.n}">
+  <div class="bookhead">
+    <h2>${b.name}<span class="rng">${b.range}</span></h2>
+    <p class="strap">${b.strap}</p>
+  </div>
+
+  <div class="seambox">
+    <div class="lab">The seam — how you know the book ends here</div>
+    <div class="vs"><b>${b.seamRef}</b> &nbsp;“${b.seam}”</div>
+    <p class="why">${b.why}</p>
+  </div>
+
+  <div class="cols">
+    <div class="card">
+      <h3>Who is named</h3>
+      ${rowsHTML(b.who)}
+      <p style="margin-top:10px">${b.whoNote}</p>
+    </div>
+
+    <div class="card">
+      <h3>What kinds are here</h3>
+      ${rowsHTML(b.kinds)}
+    </div>
+
+    <div class="card">
+      <h3>Words at the top</h3>
+      ${rowsHTML(b.words)}
+    </div>
+
+    <div class="card">
+      <h3>${b.device.title}</h3>
+      <p>${b.device.intro}</p>
+      ${b.device.ex.map(([t,q])=>`<div class="ex"><span class="t">${t}</span><div class="q">${q}</div></div>`).join('')}
+      <div class="tryit">${b.device.tryit}</div>
+    </div>
+
+    <div class="card">
+      <h3>In the New Testament</h3>
+      ${b.nt.map(([p,r,k])=>`<div class="ntrow"><span class="l"><b>Psalm ${p}</b> ${r}</span><span class="pill ${k}">${k==='q'?'quoted':'convergence'}</span></div>`).join('')}
+      ${b.ntNote?`<p style="margin-top:10px">${b.ntNote}</p>`:''}
+    </div>
+
+    <div class="card care">
+      <h3>Read carefully</h3>
+      <p>${b.care}</p>
+      <p style="margin-top:10px;font-size:.84rem;color:var(--ink-3)">Where we are: ${b.where}</p>
+    </div>
+  </div>
+</section>`).join('');
+
+/* ============================ JUMP NAV ============================ */
+const jump=document.getElementById('jump');
+jump.innerHTML=`<button type="button" class="home" data-home="1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>The map</button>`+BOOKS.map(b=>`<button type="button" data-b="${b.n}">${b.name}<span style="color:var(--ink-3)"> ${b.from}–${b.to}</span></button>`).join('');
+function toMap(){
+  const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const strip=document.querySelector('.stripwrap');
+  if(strip) strip.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});
+  else window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});
+}
+jump.addEventListener('click',e=>{
+  if(e.target.closest('button[data-home]')){ e.preventDefault(); toMap(); return; }
+  const t=e.target.closest('button[data-b]'); if(!t) return;
+  e.preventDefault();
+  const sec=document.getElementById('book'+t.dataset.b);
+  if(!sec) return;
+  sec.classList.remove('hidden');
+  const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  sec.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});
+});
+const obs=new IntersectionObserver(es=>{
+  es.forEach(e=>{ if(e.isIntersecting){
+    document.querySelectorAll('.jump button').forEach(a=>a.classList.toggle('on',a.dataset.b===e.target.dataset.book));
+  }});
+},{rootMargin:'-45% 0px -50% 0px'});
+document.querySelectorAll('.book').forEach(s=>obs.observe(s));
+
+/* ============================ SEARCH ============================ */
+const q=document.getElementById('q'), nores=document.getElementById('noresult');
+q.addEventListener('input',()=>{
+  const t=q.value.trim().toLowerCase();
+  document.querySelectorAll('.cell').forEach(c=>c.classList.remove('match'));
+  if(!t){
+    document.querySelectorAll('.book').forEach(s=>s.classList.remove('hidden'));
+    nores.classList.add('hidden'); return;
+  }
+  const num=parseInt(t,10);
+  if(!isNaN(num)&&num>=1&&num<=150&&String(num)===t){
+    const cell=document.querySelector(`.cell[data-n="${num}"]`);
+    cell.classList.add('match'); show(num);
+    document.querySelectorAll('.book').forEach(s=>s.classList.toggle('hidden',+s.dataset.book!==bookOf(num).n));
+    nores.classList.add('hidden'); return;
+  }
+  let hits=0;
+  document.querySelectorAll('.book').forEach(s=>{
+    const on=s.textContent.toLowerCase().includes(t);
+    s.classList.toggle('hidden',!on); if(on) hits++;
+  });
+  nores.classList.toggle('hidden',hits>0);
+});
+
+document.getElementById('printbtn').onclick=(e)=>{
+  document.querySelectorAll('.book').forEach(s=>s.classList.remove('hidden'));
+  try{ window.print(); }
+  catch(err){ e.target.textContent='Printing is blocked here — open this file in a browser'; }
+};
+
+document.getElementById('marknext').onclick=()=>{ const n=nextUp(); if(n) setTaught(n,true); };
+document.getElementById('undo').onclick=()=>{ if(lastMarked){ const n=lastMarked; setTaught(n,false); lastMarked=null; paint(); } };
+document.getElementById('codetoggle').onclick=()=>{
+  const box=document.getElementById('codebox');
+  box.classList.toggle('on');
+  if(box.classList.contains('on')){ document.getElementById('code').value=toCode(); }
+};
+document.getElementById('loadcode').onclick=()=>{
+  const v=document.getElementById('code').value;
+  const set=fromCode(v);
+  if(!set.size){ document.getElementById('savenote').textContent='That code had no psalm numbers in it. Use something like 1-67 or 1-66,70.'; return; }
+  taught=set; lastMarked=null; saveTaught(); paint();
+};
+
+/* keep the book bar clear of the header, whatever height it wraps to */
+function syncSticky(){
+  const h=document.querySelector('header.top');
+  if(h) document.documentElement.style.setProperty('--topH', h.offsetHeight+'px');
+}
+window.addEventListener('resize',syncSticky);
+window.addEventListener('orientationchange',()=>setTimeout(syncSticky,120));
+syncSticky(); setTimeout(syncSticky,300);
+
+/* floating return */
+const tomapBtn=document.getElementById('tomap');
+tomapBtn.onclick=toMap;
+function watchScroll(){
+  const strip=document.querySelector('.stripwrap');
+  if(!strip) return;
+  const past=strip.getBoundingClientRect().bottom < 0;
+  tomapBtn.classList.toggle('on',past);
+}
+window.addEventListener('scroll',watchScroll,{passive:true});
+document.addEventListener('scroll',watchScroll,{passive:true,capture:true});
+watchScroll();
+
+/* the strip also offsets itself from the header when jumped to */
+document.querySelector('.stripwrap').style.scrollMarginTop='calc(var(--topH,53px) + 12px)';
+
+paint();
+</script>
+</body>
+</html>
