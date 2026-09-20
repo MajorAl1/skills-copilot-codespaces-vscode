@@ -2,7 +2,7 @@
   "schemaVersion": "1.6",
   "publicationStatus": "published",
   "meta": {
-    "version": "1.6.2",
+    "version": "1.6.3",
     "compileDate": "2026-05-04",
     "compileDateDisplay": "Monday, May 04, 2026",
     "methodologyVersion": "4.4",
@@ -12,15 +12,6 @@
     "edition": "v1.1 Master Edition",
     "disclaimer": "This stack is a reference, not advice. Eligibility, benefit amounts, and program names change. Before relying on any program described in any module, confirm the current details at the primary source named in that module, or call the listed phone number. Compiled in good faith; errors and omissions are possible.",
     "pendingUpdates": [
-      {
-        "id": "totalassist",
-        "date": "2026-07-01",
-        "trigger": "PAN-PAF TotalAssist launch",
-        "affects": [
-          "entry-paf-pan"
-        ],
-        "notice": "The scheduled July 1, 2026 launch date for TotalAssist has passed. This entry was written before launch and has not yet been re-verified. Confirm the current application portal directly with PAN Foundation or Patient Advocate Foundation before applying."
-      },
       {
         "id": "haf",
         "date": "2026-09-30",
@@ -218,11 +209,12 @@
                   "pending": "liheap"
                 },
                 {
-                  "text": "Federal LIHEAP staff at HHS were eliminated in April 2025 and, as of the compile date, had not been rehired. States operate with reduced federal support. Program continues to function but funding releases have been less predictable than in prior years.",
+                  "text": "Federal LIHEAP program office staff at HHS were eliminated on April 1, 2025 and, per the most recent reporting available (National Energy Assistance Directors Association, February 2026), had not been rehired; states run their programs without federal training or guidance. Money still flowed: the remaining FY 2026 funds were disbursed by April 20, 2026 after delays. The administration has proposed eliminating LIHEAP in FY 2027. Congress rejected a similar proposal for FY 2026 and increased funding instead, and the House Appropriations chair has said he opposes elimination.",
                   "classification": "PLAUSIBLE",
-                  "asOf": "2026-05-04",
-                  "reviewBy": "2026-08-02",
-                  "pending": "liheap"
+                  "asOf": "2026-09-20",
+                  "reviewBy": "2026-12-31",
+                  "pending": "liheap",
+                  "sourceUrl": "https://neada.org/press/liheap-under-threat/"
                 },
                 {
                   "text": "Federal eligibility ceiling: Up to 150 percent of the federal poverty line, or 60 percent of state median income. States may set lower limits.",
@@ -607,18 +599,19 @@
               "description": "A $9.961 billion federal program (American Rescue Plan, 2021) that helped homeowners facing COVID-era financial hardship catch up on mortgage, utility, insurance, property-tax, HOA, and certain home-repair payments.",
               "extraClaims": [
                 {
-                  "text": "Status (April 2026): Winding down. Through September 2025, HAF had delivered roughly $7.9 billion in assistance to more than 610,000 homeowners; ~95 percent of state allocations were expended. The federal period of performance ends September 30, 2026. Many state HAF programs have already closed application intake; others remain open with limited funds.",
+                  "text": "Status (September 2026): Winding down. Through September 2025, HAF had delivered roughly $7.9 billion in assistance to more than 610,000 homeowners; ~95 percent of state allocations were expended. The federal period of performance ends September 30, 2026. Many state HAF programs have already closed application intake; others remain open with limited funds.",
                   "classification": "VERIFIED",
-                  "asOf": "2026-04-30",
+                  "asOf": "2026-09-20",
                   "reviewBy": "2026-09-30",
                   "pending": "haf"
                 },
                 {
-                  "text": "The National Council of State Housing Agencies maintains a current state-by-state status list. Some states (e.g., Montana, New Jersey, North Dakota, U.S. Virgin Islands) remain open as of the compile date; many others have closed.",
+                  "text": "The National Council of State Housing Agencies maintains a current state-by-state status list. As of September 2026, most states (45 or more, including California, Florida, New York, Texas, and Pennsylvania) have closed their programs. Only Montana, New Jersey, North Dakota, and the U.S. Virgin Islands still showed open programs, with Hawaii limited or waitlisted. Montana's remaining program is authorized only through September 30, 2026, and its home-repairs sub-program closed to new applicants in January 2025 after exhausting funds; confirm directly with the state whether it has closed on schedule.",
                   "classification": "VERIFIED",
-                  "asOf": "2026-05-04",
-                  "reviewBy": "2026-08-02",
-                  "pending": "haf"
+                  "asOf": "2026-09-20",
+                  "reviewBy": "2026-10-15",
+                  "pending": "haf",
+                  "sourceUrl": "https://www.ncsha.org/homeowner-assistance-fund/"
                 }
               ],
               "primarySource": "home.treasury.gov/policy-issues/coronavirus/assistance-for-state-local-and-tribal-governments/homeowner-assistance-fund",
@@ -1047,22 +1040,25 @@
           "entries": [
             {
               "id": "entry-paf-pan",
-              "name": "Patient Advocate Foundation (PAF) — incorporating PAN Foundation",
+              "name": "Patient Advocate Foundation (PAF) and PAN Foundation — TotalAssist",
               "phone": "1-800-532-5274",
               "phoneLabel": "PAF (PAN: 1-866-316-7263)",
-              "url": "patientadvocate.org",
-              "urlLabel": "patientadvocate.org · panapply.org",
+              "url": "uniting.patientadvocate.org/totalassist",
+              "urlLabel": "TotalAssist program page · transition FAQ at uniting.patientadvocate.org",
               "classification": "VERIFIED",
-              "description": "The two largest U.S. disease-fund charities announced a strategic merger in March 2026. A combined platform, TotalAssist, is scheduled to begin enrolling patients July 1, 2026. Until then, both organizations continue to operate independently; existing grants remain in effect; new applicants use the original portals. Together they manage more than 130 disease-specific funds covering copays, premiums, deductibles, and some treatment-related costs such as transportation. PAF also provides free case management — human navigators who work a complex case (insurance denials, coverage gaps, bill disputes) from start to finish.",
+              "description": "The two largest U.S. disease-fund charities announced a strategic merger on March 3, 2026, and on July 1, 2026 launched a single combined assistance program, TotalAssist. TotalAssist consolidates both organizations' copay and financial-assistance funds (nearly 150 disease-specific funds covering copays, premiums, deductibles, and some treatment-related costs such as transportation) into one platform. The organizations describe it as first-come, first-served with no waitlist, instant eligibility decisions, point-of-sale pharmacy processing, and grants usable across several expense categories rather than tied to one diagnosis. PAF also provides free case management — human navigators who work a complex case (insurance denials, coverage gaps, bill disputes) from start to finish.",
               "extraClaims": [
                 {
-                  "text": "TotalAssist launch date is PLAUSIBLE until launched.",
-                  "classification": "PLAUSIBLE"
+                  "text": "How the two legacy application systems (patientadvocate.org and panapply.org) are being wound down is not spelled out publicly. If you hold an existing PAF or PAN grant, confirm your status with the organization directly before assuming anything has changed; the transition FAQ at uniting.patientadvocate.org covers this.",
+                  "classification": "PLAUSIBLE",
+                  "asOf": "2026-09-20",
+                  "reviewBy": "2027-03-31"
                 }
               ],
-              "asOf": "2026-05-04",
-              "reviewBy": "2026-07-01",
-              "pending": "totalassist"
+              "asOf": "2026-09-20",
+              "reviewBy": "2027-03-31",
+              "primarySource": "Patient Advocate Foundation, TotalAssist program page (uniting.patientadvocate.org/totalassist) and merger announcement (PR Newswire, 2026); uniting.patientadvocate.org/our-story",
+              "sourceUrl": "https://uniting.patientadvocate.org/totalassist/"
             },
             {
               "id": "entry-healthwell",
@@ -3477,6 +3473,11 @@
       "version": "1.6.2",
       "date": "2026-09-20",
       "changes": "Corrected two figures after the scheduled source check against medicare.gov: Medicare Savings Program resource limits for 2026 are $9,950 individual / $14,910 couple for QMB, SLMB and QI (previously stated $9,660 / $14,470 for QMB and SLMB); Extra Help resource limits for 2026 are $18,090 single / $36,100 couple (previously 2025 figures carried forward). No other content changed."
+    },
+    {
+      "version": "1.6.3",
+      "date": "2026-09-20",
+      "changes": "Re-verified the three items past review. PAF/PAN entry rewritten for the July 1, 2026 TotalAssist launch (PAF program page and merger announcement) and the launch trigger retired. LIHEAP staffing claim updated from NEADA and APPA reporting: federal program office still unstaffed, FY 2026 funds fully disbursed by April 20, 2026, FY 2027 elimination proposed. HAF state-status claim updated from the NCSHA tracker: 45+ states closed; Montana, New Jersey, North Dakota and the U.S. Virgin Islands open, Hawaii limited; Montana authorized only through September 30, 2026."
     }
   ]
 }

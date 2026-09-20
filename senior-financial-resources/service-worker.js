@@ -3,7 +3,7 @@
    Data (content.json, manifest.json): network-first, so a returning visitor always sees
    the newest data file when online, and the last good copy when offline.
    Cache name is stamped by tools/build.js; a new build evicts the previous cache. */
-var CACHE = 'sfr-1.6.2-2026-09-20';
+var CACHE = 'sfr-1.6.3-2026-09-20';
 var SHELL = ['./', './index.html', './content.json', './manifest.json'];
 var NETWORK_FIRST = /\/(content\.json|manifest\.json)$/;
 
