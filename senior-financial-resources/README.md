@@ -64,13 +64,12 @@ The folder's own `netlify.toml` is kept for the alternative setup where the site
 
 | Source | Figures compared |
 |---|---|
-| HHS poverty guidelines API | Medicare Savings Program monthly income limits (QMB, SLMB, QI, individual and couple), derived as FPL ÷ 12 + $20 |
-| SSA SSI page | SSI federal benefit rate, individual and couple |
-| SSA COLA page | Cost-of-living adjustment percentage |
-| Medicare costs page | Standard Part B premium |
-| Medicare Savings Programs page | Resource limits |
-| SSA Extra Help page | Extra Help resource limits |
+| Medicare.gov, Medicare Savings Programs page | QMB, SLMB and QI monthly income limits and resource limits, individual and couple; Extra Help brand-name copay cap |
+| Medicare.gov, Medicare costs page | Standard Part B premium |
+| Medicare.gov, help with drug costs page | Extra Help resource limits, single and couple |
 | USAC Lifeline site | Monthly discount, standard and Tribal |
+| SSA SSI and COLA pages | SSI federal benefit rate and COLA percentage. **ssa.gov refuses automated reads (HTTP 403)**; the report lists these for checking by eye. |
+| HHS poverty guidelines API | Informational cross-check of QMB limits. **aspe.hhs.gov refuses automated reads**; same treatment. |
 
 It also lists every figure past its review date, figures due within 45 days, and the state of each scheduled change. It never edits `content.json`.
 
