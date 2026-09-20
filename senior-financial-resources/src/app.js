@@ -816,9 +816,13 @@
     var el = $('#content-age');
     if (!el) return;
     var age = contentAgeDays();
-    el.textContent = 'v' + APP_VERSION + ' · facts verified ' + formatDate(CONTENT.meta.compileDate) + ' · ' + age + ' days ago';
-    el.className = age > 180 ? 'age-stale' : (age > 90 ? 'age-warn' : '');
-    el.title = age > 90 ? 'More than 90 days since the last verification pass. Dated figures are flagged individually as their review dates pass.' : '';
+    var due = reviewQueue().length;
+    // The count is computed from per-figure dates against today; editing the verified date cannot clear it.
+    var text = 'v' + APP_VERSION + ' · facts verified ' + formatDate(CONTENT.meta.compileDate) + ' · ' + age + ' days ago';
+    text += due ? ' · ' + due + ' figure' + (due === 1 ? '' : 's') + ' due for review' : ' · no figures due for review';
+    el.textContent = text;
+    el.className = due ? 'age-stale' : (age > 90 ? 'age-warn' : '');
+    el.title = due ? 'Figures past their review date are marked REVIEW DUE where they appear. Open Version History & Review Queue for the list.' : (age > 90 ? 'More than 90 days since the last verification pass.' : '');
   }
 
   // ---------- Footer ----------

@@ -88,6 +88,32 @@ for (const mk of Object.keys(content.modules || {})) {
 for (const ev of content.events || []) for (const a of ev.seeAlso || []) if (!anchorExists(a)) fail(`${ev.id} seeAlso unknown anchor ${a}`);
 for (const [from, to] of Object.entries(content.anchorRedirects || {})) if (!anchorExists(to)) fail(`anchorRedirects ${from} -> unknown ${to}`);
 
+// ---------- honesty guard ----------
+// meta.compileDate asserts a full verification pass on that date. A figure whose reviewBy is
+// earlier than that date was, by the file's own account, already overdue when the pass happened,
+// so either the figure was not re-verified or the date is wrong. Refuse to publish that.
+if (m.compileDate) {
+  const overdueAtPass = [];
+  const look = (obj, where) => { if (obj.reviewBy && obj.reviewBy < m.compileDate) overdueAtPass.push(`${where} (review was due ${obj.reviewBy})`); };
+  for (const mk of Object.keys(content.modules || {})) {
+    for (const s of content.modules[mk].sections || []) {
+      look(s, s.id);
+      for (const e of s.entries || []) {
+        look(e, e.id);
+        (e.extraClaims || []).forEach((c, i) => look(c, `${e.id} claim ${i}`));
+      }
+      if (s.middleIncomeSidebar) (s.middleIncomeSidebar.claims || []).forEach((c, i) => look(c, `${s.id} sidebar claim ${i}`));
+    }
+  }
+  for (const p of m.pendingUpdates || []) if (p.date && p.date < m.compileDate) {
+    overdueAtPass.push(`pendingUpdates ${p.id} (${p.trigger} occurred ${p.date}; re-verify the affected entries and remove or re-date the trigger)`);
+  }
+  if (overdueAtPass.length) {
+    fail(`meta.compileDate ${m.compileDate} claims a verification pass, but these figures were already past review on that date. Re-verify them (update asOf and reviewBy) or leave compileDate where it was:`);
+    for (const o of overdueAtPass) fail('    ' + o);
+  }
+}
+
 // ---------- report ----------
 for (const w of warn) console.warn('warning: ' + w);
 if (errors.length) {
