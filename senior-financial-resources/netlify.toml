@@ -1,0 +1,34 @@
+# Netlify configuration for Senior Financial Resources.
+# Create the Netlify site with "Base directory" = senior-financial-resources so this file applies.
+# index.html, manifest.json and service-worker.js are committed build outputs of `node tools/build.js`;
+# the build command re-runs it so a content.json edit alone still deploys a consistent site.
+
+[build]
+  base = "senior-financial-resources"
+  publish = "."
+  command = "node tools/build.js"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Data and worker must never be served stale by the CDN or browser cache; the service worker
+# decides what to cache. index.html likewise, so the "newer edition" banner resolves on reload.
+[[headers]]
+  for = "/content.json"
+  [headers.values]
+    Cache-Control = "no-cache"
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Cache-Control = "no-cache"
+[[headers]]
+  for = "/service-worker.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
