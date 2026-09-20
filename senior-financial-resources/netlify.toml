@@ -1,10 +1,10 @@
 # Netlify configuration for Senior Financial Resources.
-# Create the Netlify site with "Base directory" = senior-financial-resources so this file applies.
+# This folder is the site root. When the Netlify site is linked to the GitHub repository, set
+# "Base directory" = senior-financial-resources in the site settings so Netlify reads this file.
 # index.html, manifest.json and service-worker.js are committed build outputs of `node tools/build.js`;
 # the build command re-runs it so a content.json edit alone still deploys a consistent site.
 
 [build]
-  base = "senior-financial-resources"
   publish = "."
   command = "node tools/build.js"
 
