@@ -58,6 +58,22 @@ The repository's root `netlify.toml` runs `netlify-build.sh`, which reads the `S
 
 The folder's own `netlify.toml` is kept for the alternative setup where the site's base directory is set to `senior-financial-resources`; either route produces the same site.
 
-## Not in v1.6
+## Scheduled source check
 
-Automated re-verification against primary sources (a scheduled job that diffs SSA, CMS, HHS and USAC figures against `content.json` and opens a pull request for review) is the next layer. It needs the structured fields this release adds.
+`tools/check-sources.js` fetches machine-readable primary sources and compares the figures they publish with the figures stated in `content.json`:
+
+| Source | Figures compared |
+|---|---|
+| HHS poverty guidelines API | Medicare Savings Program monthly income limits (QMB, SLMB, QI, individual and couple), derived as FPL ÷ 12 + $20 |
+| SSA SSI page | SSI federal benefit rate, individual and couple |
+| SSA COLA page | Cost-of-living adjustment percentage |
+| Medicare costs page | Standard Part B premium |
+| Medicare Savings Programs page | Resource limits |
+| SSA Extra Help page | Extra Help resource limits |
+| USAC Lifeline site | Monthly discount, standard and Tribal |
+
+It also lists every figure past its review date, figures due within 45 days, and the state of each scheduled change. It never edits `content.json`.
+
+The GitHub Actions workflow `.github/workflows/senior-source-check.yml` runs it every Monday and on demand (Actions tab, "Run workflow"). When anything needs attention it opens or refreshes one issue labelled `source-check` containing the report; when everything matches it closes that issue. The fetched pages are attached to each run as an artifact. An extractor that cannot find its figure reports "could not be read" rather than guessing; that usually means the page was redesigned and the extractor in `tools/check-sources.js` needs updating.
+
+Run it locally with `node tools/check-sources.js --debug`; `--today YYYY-MM-DD` previews a future date.

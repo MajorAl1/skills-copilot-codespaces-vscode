@@ -1,0 +1,90 @@
+name: Senior Financial Resources — source check
+
+# Compares figures published at primary sources (HHS, SSA, Medicare, USAC) with the figures stated in
+# senior-financial-resources/content.json, and keeps one open issue describing what needs a human's
+# attention. It never edits content. See senior-financial-resources/tools/check-sources.js.
+
+on:
+  schedule:
+    - cron: '0 13 * * 1'   # every Monday 13:00 UTC
+  workflow_dispatch:
+    inputs:
+      today:
+        description: 'Evaluate as of this date (YYYY-MM-DD), for previewing'
+        required: false
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: senior-source-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Compare primary sources with content.json
+        id: check
+        run: |
+          cd senior-financial-resources
+          TODAY_ARG=""
+          if [ -n "${{ github.event.inputs.today }}" ]; then TODAY_ARG="--today ${{ github.event.inputs.today }}"; fi
+          node tools/check-sources.js --out "$RUNNER_TEMP/source-check" --debug $TODAY_ARG
+          echo "actionable=$(node -p "require('$RUNNER_TEMP/source-check/result.json').actionable")" >> "$GITHUB_OUTPUT"
+          cat "$RUNNER_TEMP/source-check/report.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Save fetched pages and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-check-${{ github.run_number }}
+          path: ${{ runner.temp }}/source-check
+          retention-days: 30
+
+      - name: File or update the review issue
+        uses: actions/github-script@v7
+        env:
+          REPORT_PATH: ${{ runner.temp }}/source-check/report.md
+          ACTIONABLE: ${{ steps.check.outputs.actionable }}
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync(process.env.REPORT_PATH, 'utf8');
+            const actionable = Number(process.env.ACTIONABLE || 0);
+            const label = 'source-check';
+            const { owner, repo } = context.repo;
+            const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+            const footer = `\n\n_Run: ${runUrl} · fetched pages are attached to the run as an artifact._`;
+
+            try { await github.rest.issues.getLabel({ owner, repo, name: label }); }
+            catch (e) { await github.rest.issues.createLabel({ owner, repo, name: label, color: '7A5A0F', description: 'Automated comparison of content.json with primary sources' }); }
+
+            const open = await github.rest.issues.listForRepo({ owner, repo, state: 'open', labels: label, per_page: 5 });
+            const existing = open.data.find(i => !i.pull_request);
+            const today = new Date().toISOString().slice(0, 10);
+            const title = `Source check: ${actionable} item${actionable === 1 ? '' : 's'} need attention (${today})`;
+
+            if (actionable === 0) {
+              if (existing) {
+                await github.rest.issues.createComment({ owner, repo, issue_number: existing.number, body: `All figures match their sources and nothing is past its review date as of ${today}. Closing.` + footer });
+                await github.rest.issues.update({ owner, repo, issue_number: existing.number, state: 'closed', state_reason: 'completed' });
+                core.info(`Closed #${existing.number}: nothing actionable.`);
+              } else core.info('Nothing actionable and no open issue. Done.');
+              return;
+            }
+            if (existing) {
+              await github.rest.issues.update({ owner, repo, issue_number: existing.number, title, body: report + footer });
+              await github.rest.issues.createComment({ owner, repo, issue_number: existing.number, body: `Re-checked ${today}: ${actionable} item${actionable === 1 ? '' : 's'} need attention. The issue body has been refreshed.` + footer });
+              core.info(`Updated #${existing.number}.`);
+            } else {
+              const created = await github.rest.issues.create({ owner, repo, title, body: report + footer, labels: [label] });
+              core.info(`Opened #${created.data.number}.`);
+            }
