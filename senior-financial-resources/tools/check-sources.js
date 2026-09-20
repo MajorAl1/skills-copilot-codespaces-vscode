@@ -46,7 +46,9 @@ function contextSnippets(text, word, width = 160, max = 4) {
 async function fetchText(url) {
   const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 30000);
   try {
-    const r = await fetch(url, { signal: ctl.signal, redirect: 'follow', headers: { 'user-agent': 'Mozilla/5.0 (compatible; SeniorFinancialResources-source-check/1.0; +https://senior-financial-resources.netlify.app)', accept: 'text/html,application/json;q=0.9,*/*;q=0.8' } });
+    const r = await fetch(url, { signal: ctl.signal, redirect: 'follow', headers: {
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+      accept: 'text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8', 'accept-language': 'en-US,en;q=0.9' } });
     const body = await r.text();
     return { ok: r.ok, status: r.status, body };
   } finally { clearTimeout(t); }
@@ -60,37 +62,108 @@ function anchored(text, anchorRx, valueRx, window = 400) {
 }
 
 // ---------- watchers ----------
-// Each watcher: fetch its source, return {values} keyed by figure name, and a list of comparisons
-// against content.json. `stated` reads the figure from the claim text; `live` computes the source's figure.
+// Each watcher fetches its source, returns {values} keyed by figure name (or {unreadable}), and
+// `compare` pairs those values with figures parsed from content.json claim text.
 const YEAR = content.meta.compileDate.slice(0, 4); // year the stated figures belong to
+const G = (text, rx) => num((rx.exec(text) || [])[1]);
+
+// medicare.gov lists each program as: "<Program name> ... Individual $INC $RES Married couple $INC $RES"
+function mspProgram(t, nameRx) {
+  const a = nameRx.exec(t); if (!a) return null;
+  const seg = t.slice(a.index, a.index + 900);
+  const m = /Individual\s*\$([\d,]+)\s*\$([\d,]+)\s*Married couple\s*\$([\d,]+)\s*\$([\d,]+)/i.exec(seg);
+  return m ? { incInd: num(m[1]), resInd: num(m[2]), incCpl: num(m[3]), resCpl: num(m[4]) } : null;
+}
+
 const WATCHERS = [
   {
-    id: 'fpl', label: `HHS poverty guidelines ${YEAR} (48 states + D.C.) → Medicare Savings Program income limits`,
-    url: `https://aspe.hhs.gov/topical-subjects/poverty-economic-mobility/poverty-guidelines/api/${YEAR}/us/1`,
-    urls: (y) => [1, 2].map((n) => `https://aspe.hhs.gov/topical-subjects/poverty-economic-mobility/poverty-guidelines/api/${y}/us/${n}`),
-    anchors: ['income', 'household_size'],
+    id: 'msp', label: `Medicare.gov — Medicare Savings Programs, income and resource limits ${YEAR}`,
+    url: 'https://www.medicare.gov/basics/costs/help/medicare-savings-programs',
+    anchors: ['limits for 20', 'Individual', 'no more than \\$'],
     async read(fetchAll) {
-      const [p1, p2] = await fetchAll(this.urls(YEAR));
-      const parse = (r) => { try { const j = JSON.parse(r.body); return num(j.data && j.data.income != null ? j.data.income : (j.income != null ? j.income : null)); } catch (e) { return null; } };
-      const fpl1 = parse(p1), fpl2 = parse(p2);
-      if (fpl1 == null || fpl2 == null) return { unreadable: 'API response did not contain data.income', raw: [p1, p2] };
-      // CMS formula: monthly FPL percentage + $20 general income disregard, rounded to whole dollars.
-      const limit = (fpl, pct) => Math.round((fpl * pct) / 12) + 20;
-      return { values: { 'FPL 1 person': fpl1, 'FPL 2 persons': fpl2,
-        'QMB individual': limit(fpl1, 1.0), 'QMB couple': limit(fpl2, 1.0),
-        'SLMB individual': limit(fpl1, 1.2), 'SLMB couple': limit(fpl2, 1.2),
-        'QI individual': limit(fpl1, 1.35), 'QI couple': limit(fpl2, 1.35) }, raw: [p1, p2] };
+      const [r] = await fetchAll([this.url]); const t = stripHTML(r.body);
+      const yr = /limits for (20\d\d)/i.exec(t);
+      const qmb = mspProgram(t, /Qualified Medicare Beneficiary \(QMB\)/i);
+      const slmb = mspProgram(t, /Specified Low-Income Medicare Beneficiary \(SLMB\)/i);
+      const qi = mspProgram(t, /Qualifying Individual \(QI\)/i);
+      const copay = G(t, /no more than \$([\d.]+) in 20\d\d for each drug/i);
+      if (!qmb && !slmb && !qi) return { unreadable: 'could not find the program tables (QMB/SLMB/QI)', raw: [r] };
+      const v = { 'page year': yr ? Number(yr[1]) : null, 'Extra Help brand copay cap': copay };
+      for (const [k, p] of [['QMB', qmb], ['SLMB', slmb], ['QI', qi]]) if (p) Object.assign(v, { [`${k} income individual`]: p.incInd, [`${k} income couple`]: p.incCpl, [`${k} resources individual`]: p.resInd, [`${k} resources couple`]: p.resCpl });
+      return { values: v, raw: [r] };
     },
-    compare(values) {
+    compare(v) {
       const c = findClaim('entry-msp', `${YEAR} federal limits`);
-      const g = (rx) => num((rx.exec(c.text) || [])[1]);
+      const eh = findClaim('entry-extra-help', `${YEAR} copay caps`);
+      const yearNote = v['page year'] && String(v['page year']) !== YEAR ? `source page now shows ${v['page year']} limits; stated figures are for ${YEAR}` : '';
+      const row = (figure, stated, live, note) => ({ figure, stated, live, claim: c, entry: 'entry-msp', note: [note, yearNote].filter(Boolean).join('; ') });
       return [
-        { figure: 'QMB individual /month', stated: g(/QMB ~\$([\d,]+)\/month individual/), live: values['QMB individual'], tolerance: 2, claim: c, entry: 'entry-msp', note: 'derived: FPL ÷ 12 + $20 disregard' },
-        { figure: 'QMB couple /month', stated: g(/~\$([\d,]+)\/month couple/), live: values['QMB couple'], tolerance: 2, claim: c, entry: 'entry-msp', note: 'derived' },
-        { figure: 'SLMB individual /month', stated: g(/SLMB ~\$([\d,]+)\//), live: values['SLMB individual'], tolerance: 2, claim: c, entry: 'entry-msp', note: 'derived (120% FPL)' },
-        { figure: 'SLMB couple /month', stated: g(/SLMB ~\$[\d,]+\/\$([\d,]+)/), live: values['SLMB couple'], tolerance: 2, claim: c, entry: 'entry-msp', note: 'derived (120% FPL)' },
-        { figure: 'QI individual /month', stated: g(/QI ~\$([\d,]+)\//), live: values['QI individual'], tolerance: 2, claim: c, entry: 'entry-msp', note: 'derived (135% FPL)' },
-        { figure: 'QI couple /month', stated: g(/QI ~\$[\d,]+\/\$([\d,]+)/), live: values['QI couple'], tolerance: 2, claim: c, entry: 'entry-msp', note: 'derived (135% FPL)' }
+        row('QMB income individual /month', G(c.text, /QMB ~\$([\d,]+)\/month individual/), v['QMB income individual']),
+        row('QMB income couple /month', G(c.text, /~\$([\d,]+)\/month couple/), v['QMB income couple']),
+        row('SLMB income individual /month', G(c.text, /SLMB ~\$([\d,]+)\//), v['SLMB income individual']),
+        row('SLMB income couple /month', G(c.text, /SLMB ~\$[\d,]+\/\$([\d,]+)/), v['SLMB income couple']),
+        row('QI income individual /month', G(c.text, /QI ~\$([\d,]+)\//), v['QI income individual']),
+        row('QI income couple /month', G(c.text, /QI ~\$[\d,]+\/\$([\d,]+)/), v['QI income couple']),
+        row('QMB/SLMB resources individual', G(c.text, /resource limits: \$([\d,]+)\/individual/), v['QMB resources individual'], 'claim states one figure for QMB and SLMB; compared with the QMB row'),
+        row('QMB/SLMB resources couple', G(c.text, /\$([\d,]+)\/couple for QMB and SLMB/), v['QMB resources couple'], 'compared with the QMB row'),
+        row('SLMB resources individual', G(c.text, /resource limits: \$([\d,]+)\/individual/), v['SLMB resources individual'], 'same stated figure, compared with the SLMB row'),
+        row('QI resources individual', G(c.text, /\$([\d,]+)\/\$[\d,]+ for QI/), v['QI resources individual']),
+        row('QI resources couple', G(c.text, /\$[\d,]+\/\$([\d,]+) for QI/), v['QI resources couple']),
+        { figure: 'Extra Help brand-name copay cap', stated: G(eh.text, /\$([\d.]+) per brand-name drug/), live: v['Extra Help brand copay cap'], claim: eh, entry: 'entry-extra-help', note: yearNote }
+      ];
+    }
+  },
+  {
+    id: 'part-b', label: `Medicare.gov — standard Part B premium ${YEAR}`,
+    url: 'https://www.medicare.gov/basics/costs/medicare-costs', anchors: ['each month', 'depending on your income'],
+    async read(fetchAll) {
+      const [r] = await fetchAll([this.url]); const t = stripHTML(r.body);
+      // Phrased as "$202.90 each month (or higher depending on your income)".
+      const m = /\$(\d{2,3}\.\d{2})\s*each month\s*\(or higher depending on your income\)/i.exec(t) || /\$(\d{2,3}\.\d{2})[^$]{0,120}depending on your income/i.exec(t);
+      if (!m) return { unreadable: 'could not find "$NNN.NN each month (or higher depending on your income)"', raw: [r] };
+      return { values: { 'Part B standard premium': Number(m[1]) }, raw: [r] };
+    },
+    compare(v) {
+      const c = findClaim('entry-msp', `${YEAR} Medicare Part B premium`);
+      return [{ figure: 'Part B standard premium /month', stated: Number((/\$([\d.]+)\/month/.exec(c.text) || [])[1]), live: v['Part B standard premium'], claim: c, entry: 'entry-msp' }];
+    }
+  },
+  {
+    id: 'lifeline', label: 'USAC — Lifeline monthly discount',
+    url: 'https://www.lifelinesupport.org/', anchors: ['monthly discount', 'Tribal Benefit'],
+    async read(fetchAll) {
+      const [r] = await fetchAll([this.url]); const t = stripHTML(r.body);
+      const std = G(t, /Standard Benefit[^$]{0,200}monthly discount of up to \$(\d{1,2}\.\d{2})/i) ?? G(t, /monthly discount of up to \$(\d{1,2}\.\d{2})/i);
+      const tribal = G(t, /Tribal Benefit[^$]{0,300}monthly discount of up to \$(\d{2}\.\d{2})/i);
+      if (std == null) return { unreadable: 'could not find "monthly discount of up to $N.NN"', raw: [r] };
+      return { values: { 'discount /month': std, 'Tribal discount /month': tribal }, raw: [r] };
+    },
+    compare(v) {
+      const c = findClaim('entry-lifeline', 'Discount amount');
+      return [
+        { figure: 'Lifeline discount /month', stated: Number((/Up to \$([\d.]+)\/month/.exec(c.text) || [])[1]), live: v['discount /month'], claim: c, entry: 'entry-lifeline' },
+        { figure: 'Lifeline Tribal discount /month', stated: Number((/up to \$([\d.]+)\/month on qualifying Tribal/.exec(c.text) || [])[1]), live: v['Tribal discount /month'], claim: c, entry: 'entry-lifeline' }
+      ];
+    }
+  },
+  {
+    id: 'extra-help', label: 'Medicare.gov — Extra Help (Part D) resource limits',
+    url: 'https://www.medicare.gov/basics/costs/help/drug-costs', anchors: ['resources', 'married', 'limit'],
+    async read(fetchAll) {
+      const [r] = await fetchAll([this.url]); const t = stripHTML(r.body);
+      // Look for two dollar amounts of five or more digits near the word "resources".
+      const a = /resources?/i.exec(t); if (!a) return { unreadable: 'no "resources" wording found', raw: [r] };
+      const amounts = []; const rx = /\$([\d,]{5,7})/g; let m; let seg = t.slice(a.index, a.index + 1200);
+      while ((m = rx.exec(seg)) && amounts.length < 6) amounts.push(num(m[1]));
+      if (amounts.length < 2) return { unreadable: 'could not find two resource amounts near "resources"', raw: [r] };
+      const sorted = [...new Set(amounts)].sort((x, y) => x - y);
+      return { values: { 'resource limit single': sorted[0], 'resource limit couple': sorted[sorted.length - 1] }, raw: [r] };
+    },
+    compare(v) {
+      const c = findClaim('entry-extra-help', 'People enrolled in Medicaid');
+      return [
+        { figure: 'Extra Help resources single', stated: G(c.text, /\$([\d,]+) \(single\)/), live: v['resource limit single'], claim: c, entry: 'entry-extra-help' },
+        { figure: 'Extra Help resources couple', stated: G(c.text, /\$([\d,]+) \(couple\)/), live: v['resource limit couple'], claim: c, entry: 'entry-extra-help' }
       ];
     }
   },
@@ -99,17 +172,16 @@ const WATCHERS = [
     url: 'https://www.ssa.gov/oact/cola/SSI.html', anchors: ['eligible individual', 'eligible couple', 'Federal Payment'],
     async read(fetchAll) {
       const [r] = await fetchAll([this.url]); const t = stripHTML(r.body);
-      // The page tabulates monthly amounts by year; find the row for our year first, then the amounts.
       const ind = anchored(t, new RegExp(`${YEAR}[^\\d]{0,40}`), /\$?\s?([\d,]{3,6})\b/, 120) || anchored(t, /eligible individual/i, /\$\s?([\d,]{3,6})\b/, 200);
       const cpl = anchored(t, /eligible couple/i, /\$\s?([\d,]{3,6})\b/, 200);
       if (ind == null && cpl == null) return { unreadable: 'could not find the individual or couple monthly amount', raw: [r] };
       return { values: { 'individual /month': num(ind), 'couple /month': num(cpl) }, raw: [r] };
     },
-    compare(values) {
+    compare(v) {
       const c = findClaim('entry-ssi', `${YEAR} Federal Benefit Rate`);
       return [
-        { figure: 'SSI individual /month', stated: num((/\$([\d,]+)\/month for an eligible individual/.exec(c.text) || [])[1]), live: values['individual /month'], claim: c, entry: 'entry-ssi' },
-        { figure: 'SSI couple /month', stated: num((/\$([\d,]+)\/month for an eligible couple/.exec(c.text) || [])[1]), live: values['couple /month'], claim: c, entry: 'entry-ssi' }
+        { figure: 'SSI individual /month', stated: G(c.text, /\$([\d,]+)\/month for an eligible individual/), live: v['individual /month'], claim: c, entry: 'entry-ssi' },
+        { figure: 'SSI couple /month', stated: G(c.text, /\$([\d,]+)\/month for an eligible couple/), live: v['couple /month'], claim: c, entry: 'entry-ssi' }
       ];
     }
   },
@@ -123,81 +195,29 @@ const WATCHERS = [
       if (!m) return { unreadable: 'could not find a percentage next to "COLA"', raw: [r] };
       return { values: { 'COLA percent': Number(m[1]), 'COLA year': yr ? Number(yr[1]) : null }, raw: [r] };
     },
-    compare(values) {
+    compare(v) {
       const c = findClaim('entry-social-security', `${YEAR} COLA`);
-      const stated = Number((/([\d.]+) percent/.exec(c.text) || [])[1]);
-      const note = values['COLA year'] && String(values['COLA year']) !== YEAR ? `source now describes the ${values['COLA year']} COLA; the stated figure is for ${YEAR}` : '';
-      return [{ figure: 'COLA percent', stated, live: values['COLA percent'], claim: c, entry: 'entry-social-security', note }];
+      const note = v['COLA year'] && String(v['COLA year']) !== YEAR ? `source now describes the ${v['COLA year']} COLA; the stated figure is for ${YEAR}` : '';
+      return [{ figure: 'COLA percent', stated: Number((/([\d.]+) percent/.exec(c.text) || [])[1]), live: v['COLA percent'], claim: c, entry: 'entry-social-security', note }];
     }
   },
   {
-    id: 'part-b', label: `Medicare — standard Part B premium ${YEAR}`,
-    url: 'https://www.medicare.gov/basics/costs/medicare-costs', anchors: ['Part B premium', 'standard'],
+    id: 'fpl', label: `HHS poverty guidelines ${YEAR} (48 states + D.C.), informational cross-check of MSP income limits`,
+    url: `https://aspe.hhs.gov/topical-subjects/poverty-economic-mobility/poverty-guidelines/api/${YEAR}/us/1`,
+    anchors: ['income'],
     async read(fetchAll) {
-      const [r] = await fetchAll([this.url]); const t = stripHTML(r.body);
-      const v = anchored(t, /standard (?:monthly )?(?:Part B )?premium/i, /\$(\d{2,3}\.\d{2})/, 300) || anchored(t, /Part B premium/i, /\$(\d{2,3}\.\d{2})/, 400);
-      if (v == null) return { unreadable: 'could not find a $NNN.NN amount near "Part B premium"', raw: [r] };
-      return { values: { 'Part B standard premium': Number(v) }, raw: [r] };
+      const [p1, p2] = await fetchAll([1, 2].map((n) => `https://aspe.hhs.gov/topical-subjects/poverty-economic-mobility/poverty-guidelines/api/${YEAR}/us/${n}`));
+      const parse = (r) => { try { const j = JSON.parse(r.body); return num(j.data && j.data.income != null ? j.data.income : j.income); } catch (e) { return null; } };
+      const fpl1 = parse(p1), fpl2 = parse(p2);
+      if (fpl1 == null || fpl2 == null) return { unreadable: 'API response did not contain data.income', raw: [p1, p2] };
+      const limit = (fpl, pct) => Math.round((fpl * pct) / 12) + 20; // CMS: monthly FPL share + $20 disregard
+      return { values: { 'FPL 1 person': fpl1, 'FPL 2 persons': fpl2, 'QMB individual': limit(fpl1, 1), 'QMB couple': limit(fpl2, 1) }, raw: [p1, p2] };
     },
-    compare(values) {
-      const c = findClaim('entry-msp', `${YEAR} Medicare Part B premium`);
-      return [{ figure: 'Part B standard premium /month', stated: Number((/\$([\d.]+)\/month/.exec(c.text) || [])[1]), live: values['Part B standard premium'], claim: c, entry: 'entry-msp' }];
-    }
-  },
-  {
-    id: 'msp-resources', label: `Medicare — Medicare Savings Program resource limits`,
-    url: 'https://www.medicare.gov/basics/costs/help/medicare-savings-programs', anchors: ['resource limit', 'Individual', 'Married couple'],
-    async read(fetchAll) {
-      const [r] = await fetchAll([this.url]); const t = stripHTML(r.body);
-      // The page lists income and resource limits per program; capture the first individual/couple pair after "resource".
-      const ind = anchored(t, /resource limit/i, /Individual[^$]{0,40}\$([\d,]+)/i, 600);
-      const cpl = anchored(t, /resource limit/i, /(?:Married )?couple[^$]{0,40}\$([\d,]+)/i, 600);
-      if (ind == null && cpl == null) return { unreadable: 'could not find individual/couple amounts after "resource limit"', raw: [r] };
-      return { values: { 'QMB/SLMB resource individual': num(ind), 'QMB/SLMB resource couple': num(cpl) }, raw: [r] };
-    },
-    compare(values) {
+    compare(v) {
       const c = findClaim('entry-msp', `${YEAR} federal limits`);
       return [
-        { figure: 'MSP resource limit individual', stated: num((/resource limits: \$([\d,]+)\/individual/.exec(c.text) || [])[1]), live: values['QMB/SLMB resource individual'], claim: c, entry: 'entry-msp' },
-        { figure: 'MSP resource limit couple', stated: num((/\$([\d,]+)\/couple for QMB and SLMB/.exec(c.text) || [])[1]), live: values['QMB/SLMB resource couple'], claim: c, entry: 'entry-msp' }
-      ];
-    }
-  },
-  {
-    id: 'extra-help', label: 'SSA — Extra Help (Part D low-income subsidy) resource limits',
-    url: 'https://www.ssa.gov/medicare/part-d-extra-help', anchors: ['resources', 'married', 'single'],
-    async read(fetchAll) {
-      const [r] = await fetchAll([this.url]); const t = stripHTML(r.body);
-      const amounts = []; const rx = /\$([\d,]{5,7})/g; let m;
-      const seg = (() => { const a = /resources?[^.]{0,200}?(?:must|limited|less than|up to|below)/i.exec(t); return a ? t.slice(a.index, a.index + 500) : t; })();
-      while ((m = rx.exec(seg)) && amounts.length < 4) amounts.push(num(m[1]));
-      if (amounts.length < 2) return { unreadable: 'could not find two resource amounts near "resources"', raw: [r] };
-      const sorted = [...new Set(amounts)].sort((a, b) => a - b);
-      return { values: { 'resource limit single': sorted[0], 'resource limit couple': sorted[sorted.length - 1] }, raw: [r] };
-    },
-    compare(values) {
-      const c = findClaim('entry-extra-help', 'People enrolled in Medicaid');
-      return [
-        { figure: 'Extra Help resources single', stated: num((/\$([\d,]+) \(single\)/.exec(c.text) || [])[1]), live: values['resource limit single'], claim: c, entry: 'entry-extra-help' },
-        { figure: 'Extra Help resources couple', stated: num((/\$([\d,]+) \(couple\)/.exec(c.text) || [])[1]), live: values['resource limit couple'], claim: c, entry: 'entry-extra-help' }
-      ];
-    }
-  },
-  {
-    id: 'lifeline', label: 'USAC — Lifeline monthly discount',
-    url: 'https://www.lifelinesupport.org/', anchors: ['\\$9', 'per month', 'Tribal'],
-    async read(fetchAll) {
-      const [r] = await fetchAll([this.url]); const t = stripHTML(r.body);
-      const std = (/\$(\d{1,2}\.\d{2})\s*(?:per month|\/month|a month|monthly)/i.exec(t) || [])[1];
-      const tribal = anchored(t, /Tribal/i, /\$(\d{2}\.\d{2})/, 300);
-      if (std == null) return { unreadable: 'could not find a $N.NN per-month amount', raw: [r] };
-      return { values: { 'discount /month': Number(std), 'Tribal discount /month': tribal == null ? null : Number(tribal) }, raw: [r] };
-    },
-    compare(values) {
-      const c = findClaim('entry-lifeline', 'Discount amount');
-      return [
-        { figure: 'Lifeline discount /month', stated: Number((/Up to \$([\d.]+)\/month/.exec(c.text) || [])[1]), live: values['discount /month'], claim: c, entry: 'entry-lifeline' },
-        { figure: 'Lifeline Tribal discount /month', stated: Number((/up to \$([\d.]+)\/month on qualifying Tribal/.exec(c.text) || [])[1]), live: values['Tribal discount /month'], claim: c, entry: 'entry-lifeline' }
+        { figure: 'QMB income individual (derived from FPL)', stated: G(c.text, /QMB ~\$([\d,]+)\/month individual/), live: v['QMB individual'], tolerance: 2, claim: c, entry: 'entry-msp', note: 'FPL ÷ 12 + $20' },
+        { figure: 'QMB income couple (derived from FPL)', stated: G(c.text, /~\$([\d,]+)\/month couple/), live: v['QMB couple'], tolerance: 2, claim: c, entry: 'entry-msp', note: 'FPL ÷ 12 + $20' }
       ];
     }
   }
@@ -216,7 +236,7 @@ const WATCHERS = [
           const r = await fetchText(u);
           const fname = u.replace(/^https?:\/\//, '').replace(/[^A-Za-z0-9.]+/g, '_').slice(0, 120);
           fs.writeFileSync(path.join(OUT, 'pages', fname + (r.body.trim().startsWith('{') ? '.json' : '.html')), r.body);
-          if (!r.ok) throw new Error(`HTTP ${r.status} for ${u}`);
+          if (!r.ok) { const err = new Error(`HTTP ${r.status} for ${u}`); err.blocked = [401, 403, 429, 503].includes(r.status); throw err; }
           out.push(r);
         }
         return out;
@@ -241,7 +261,7 @@ const WATCHERS = [
           rec.comparisons.push({ figure: cmp.figure, stated: cmp.stated, live: cmp.live, state, entry: cmp.entry, asOf: cmp.claim.asOf, reviewBy: cmp.claim.reviewBy, note: cmp.note || '' });
         }
       }
-    } catch (e) { rec.status = 'error'; rec.error = e.message; }
+    } catch (e) { rec.status = e.blocked ? 'blocked' : 'error'; rec.error = e.message; }
     results.push(rec);
     console.log(`${w.id}: ${rec.status}${rec.error ? ' — ' + rec.error : ''}` + rec.comparisons.map((c) => `\n   ${c.state.toUpperCase().padEnd(10)} ${c.figure}: stated ${money(c.stated)} · source ${money(c.live)}`).join(''));
   }
@@ -263,7 +283,8 @@ const WATCHERS = [
   // ---------- report ----------
   const flat = results.flatMap((r) => r.comparisons.map((c) => ({ ...c, watcher: r.id, url: r.url })));
   const changed = flat.filter((c) => c.state === 'changed');
-  const unreadable = results.filter((r) => r.status !== 'ok').concat(flat.filter((c) => c.state === 'unreadable' || c.state === 'unparsed'));
+  const blocked = results.filter((r) => r.status === 'blocked');
+  const unreadable = results.filter((r) => r.status === 'unreadable' || r.status === 'error').concat(flat.filter((c) => c.state === 'unreadable' || c.state === 'unparsed'));
   const matched = flat.filter((c) => c.state === 'match');
   const actionable = changed.length + unreadable.length + queue.length + triggers.filter((t) => t.state === 'occurred').length;
   const site = 'https://senior-financial-resources.netlify.app/';
@@ -273,7 +294,7 @@ const WATCHERS = [
   L.push(`Facts last verified ${content.meta.compileDate} · content file updated ${content.meta.contentUpdated} · app v${content.meta.version}.`);
   L.push(`This report compares figures published at primary sources with the figures stated in \`content.json\`. Nothing has been changed. Every item below is a decision for a human.`);
   L.push('');
-  L.push(`**${actionable} item${actionable === 1 ? '' : 's'} need attention** · ${changed.length} changed at source · ${unreadable.length} could not be read · ${queue.length} past review date · ${matched.length} figures match.`);
+  L.push(`**${actionable} item${actionable === 1 ? '' : 's'} need attention** · ${changed.length} changed at source · ${unreadable.length} could not be read · ${queue.length} past review date · ${matched.length} figures match${blocked.length ? ` · ${blocked.length} source${blocked.length === 1 ? '' : 's'} refuse automated reads` : ''}.`);
   L.push('');
   if (changed.length) {
     L.push('## Changed at the source'); L.push(''); L.push('| Figure | Stated in content.json | Published at source | Entry | Source |'); L.push('|---|---|---|---|---|');
@@ -284,6 +305,11 @@ const WATCHERS = [
     L.push('## Could not be read automatically'); L.push('');
     for (const u of unreadable) L.push(u.figure ? `- **${u.figure}** (${u.watcher}): ${u.state === 'unparsed' ? 'the stated figure could not be parsed from the claim text' : 'the source did not yield this figure'} — check by eye: ${u.url}` : `- **${u.label}**: ${u.error} — check by eye: ${u.url}`);
     L.push(''); L.push('A page redesign usually causes this. The check refuses to guess; verify the figure manually and, if the page moved, update the extractor in `tools/check-sources.js`.'); L.push('');
+  }
+  if (blocked.length) {
+    L.push('## Sources that refuse automated reads'); L.push('');
+    for (const b of blocked) L.push(`- **${b.label}**: ${b.error}. Not counted above. Check this page by eye when its figures come up for review: ${b.url}`);
+    L.push('');
   }
   if (queue.length) {
     L.push('## Past review date (flagged REVIEW DUE on the site)'); L.push('');
@@ -306,6 +332,6 @@ const WATCHERS = [
   L.push('---'); L.push('_Generated by `tools/check-sources.js`. Sources fetched are saved as a workflow artifact for inspection._');
   const report = L.join('\n');
   fs.writeFileSync(path.join(OUT, 'report.md'), report);
-  fs.writeFileSync(path.join(OUT, 'result.json'), JSON.stringify({ today: TODAY, actionable, changed, unreadable: unreadable.map((u) => u.figure || u.label), queue, upcoming, triggers, results }, null, 2));
+  fs.writeFileSync(path.join(OUT, 'result.json'), JSON.stringify({ today: TODAY, actionable, changed, unreadable: unreadable.map((u) => u.figure || u.label), blocked: blocked.map((b) => b.label), queue, upcoming, triggers, results }, null, 2));
   console.log(`\n${actionable} actionable item(s). Report: ${path.join(OUT, 'report.md')}`);
 })().catch((e) => { console.error(e); process.exit(1); });
