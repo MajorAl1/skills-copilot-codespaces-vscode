@@ -147,23 +147,23 @@ const WATCHERS = [
     }
   },
   {
-    id: 'extra-help', label: 'Medicare.gov — Extra Help (Part D) resource limits',
-    url: 'https://www.medicare.gov/basics/costs/help/drug-costs', anchors: ['resources', 'married', 'limit'],
+    id: 'extra-help', label: `Medicare.gov — Extra Help (Part D) income and resource limits ${YEAR}`,
+    url: 'https://www.medicare.gov/basics/costs/help/drug-costs', anchors: ['resource limits in 20', 'Married couple'],
     async read(fetchAll) {
       const [r] = await fetchAll([this.url]); const t = stripHTML(r.body);
-      // Look for two dollar amounts of five or more digits near the word "resources".
-      const a = /resources?/i.exec(t); if (!a) return { unreadable: 'no "resources" wording found', raw: [r] };
-      const amounts = []; const rx = /\$([\d,]{5,7})/g; let m; let seg = t.slice(a.index, a.index + 1200);
-      while ((m = rx.exec(seg)) && amounts.length < 6) amounts.push(num(m[1]));
-      if (amounts.length < 2) return { unreadable: 'could not find two resource amounts near "resources"', raw: [r] };
-      const sorted = [...new Set(amounts)].sort((x, y) => x - y);
-      return { values: { 'resource limit single': sorted[0], 'resource limit couple': sorted[sorted.length - 1] }, raw: [r] };
+      // Same table layout as the MSP page: "Income and resource limits in 2026 ... Individual $INC $RES Married couple $INC $RES"
+      const a = /Income and resource limits in (20\d\d)/i.exec(t);
+      if (!a) return { unreadable: 'could not find "Income and resource limits in <year>"', raw: [r] };
+      const m = /Individual\s*\$([\d,]+)\s*\$([\d,]+)\s*Married couple\s*\$([\d,]+)\s*\$([\d,]+)/i.exec(t.slice(a.index, a.index + 900));
+      if (!m) return { unreadable: 'found the heading but not the Individual / Married couple rows', raw: [r] };
+      return { values: { 'page year': Number(a[1]), 'income limit single': num(m[1]), 'resource limit single': num(m[2]), 'income limit couple': num(m[3]), 'resource limit couple': num(m[4]) }, raw: [r] };
     },
     compare(v) {
       const c = findClaim('entry-extra-help', 'People enrolled in Medicaid');
+      const note = v['page year'] && String(v['page year']) !== YEAR ? `source page now shows ${v['page year']} limits` : '';
       return [
-        { figure: 'Extra Help resources single', stated: G(c.text, /\$([\d,]+) \(single\)/), live: v['resource limit single'], claim: c, entry: 'entry-extra-help' },
-        { figure: 'Extra Help resources couple', stated: G(c.text, /\$([\d,]+) \(couple\)/), live: v['resource limit couple'], claim: c, entry: 'entry-extra-help' }
+        { figure: 'Extra Help resources single', stated: G(c.text, /\$([\d,]+) \(single\)/), live: v['resource limit single'], claim: c, entry: 'entry-extra-help', note },
+        { figure: 'Extra Help resources couple', stated: G(c.text, /\$([\d,]+) \(couple\)/), live: v['resource limit couple'], claim: c, entry: 'entry-extra-help', note }
       ];
     }
   },
