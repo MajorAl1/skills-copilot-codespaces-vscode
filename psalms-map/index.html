@@ -4,6 +4,52 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Psalms — A Map</title>
+<meta name="description" content="One hundred and fifty poems in five books. An interactive map of the Psalms for the class: authors, kinds, doxologies, and New Testament quotations, with progress you can carry between devices.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="The Psalms — A Map">
+<meta property="og:description" content="One hundred and fifty poems in five books. Find the seams, track what the class has learned, and see where each psalm is quoted in the New Testament.">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" id="themecolor" content="#FCFCFD">
+<meta name="color-scheme" content="light dark">
+
+<!-- Theme canvas, painted before anything else loads so there is no flash.
+     Order matters: OS preference first, then an explicit html.light / html.dark
+     class chosen by the visitor, which always wins. -->
+<style>
+html, body{ background-color:#FCFCFD; }
+@media (prefers-color-scheme: dark){
+  html:not(.light):not(.dark), html:not(.light):not(.dark) body{ background-color:#15171C; }
+}
+html.light, html.light body{ background-color:#FCFCFD; }
+html.dark,  html.dark  body{ background-color:#15171C; }
+</style>
+<script>
+(function(){
+  try{
+    var el=document.documentElement;
+    if(el.classList.contains('dark')||el.classList.contains('light')) return;
+    var saved=null;
+    /* Storage is read inside its own try: reading localStorage can throw when
+       site data is blocked, and that throw must not skip the OS fallback. */
+    try{
+      var v=window.localStorage&&window.localStorage.getItem('psalms-map-theme');
+      if(v==='dark'||v==='light') saved=v;
+    }catch(e1){}
+    /* No class means "follow the device": the stylesheet's prefers-color-scheme
+       rules handle that case, so only an explicit choice is written here. */
+    if(saved) el.classList.add(saved);
+  }catch(e){}
+})();
+</script>
+<script>
+/* iOS Safari zooms the page when an input gets focus unless maximum-scale is 1. */
+(function(){
+  var isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  if(!isIOS) return;
+  var vp=document.querySelector('meta[name="viewport"]');
+  if(vp) vp.setAttribute('content','width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes, viewport-fit=cover');
+})();
+</script>
 <style>
 :root{
   --ground:#FCFCFD;
@@ -17,8 +63,46 @@
   --taught:#1A6040;    /* ground we have covered */
   --taught-soft:#E6F1EB;
   --here:#B8860B;
+  --surface:#FFFFFF;          /* buttons, inputs, empty cells */
+  --bar:rgba(252,252,253,.94); /* sticky bars, translucent over the ground */
+  --on-ink:#FFFFFF;           /* text sitting on an --ink background */
+  --on-ink-soft:rgba(255,255,255,.72);
+  --on-accent:#FFFFFF;        /* text sitting on --taught */
+  --seam-soft:rgba(123,45,38,.2);
+  --shadow:rgba(0,0,0,.22);
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
   --sans: "Inter", "Segoe UI", Roboto, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  color-scheme:light;
+}
+/* Dark palette. Same tokens, so nothing below this block knows about the theme.
+   Applied for a dark OS unless the visitor chose light, and for an explicit choice of dark. */
+@media (prefers-color-scheme: dark){
+  html:not(.light):not(.dark){
+    --ground:#15171C; --panel:#1C1F26; --surface:#242830;
+    --ink:#ECEEF2; --ink-2:#B6BCC7; --ink-3:#8E97A5;
+    --line:#353B47; --line-2:#272C36;
+    --seam:#E0958A; --seam-soft:rgba(224,149,138,.28);
+    --taught:#2F8F60; --taught-soft:#1B3328;
+    --here:#E3B54F;
+    --bar:rgba(21,23,28,.92);
+    --on-ink:#15171C; --on-ink-soft:rgba(21,23,28,.7);
+    --on-accent:#FFFFFF;
+    --shadow:rgba(0,0,0,.5);
+    color-scheme:dark;
+  }
+}
+html.dark{
+  --ground:#15171C; --panel:#1C1F26; --surface:#242830;
+  --ink:#ECEEF2; --ink-2:#B6BCC7; --ink-3:#8E97A5;
+  --line:#353B47; --line-2:#272C36;
+  --seam:#E0958A; --seam-soft:rgba(224,149,138,.28);
+  --taught:#2F8F60; --taught-soft:#1B3328;
+  --here:#E3B54F;
+  --bar:rgba(21,23,28,.92);
+  --on-ink:#15171C; --on-ink-soft:rgba(21,23,28,.7);
+  --on-accent:#FFFFFF;
+  --shadow:rgba(0,0,0,.5);
+  color-scheme:dark;
 }
 *{box-sizing:border-box;}
 html{ -webkit-text-size-adjust:100%; scroll-behavior:smooth; }
@@ -35,7 +119,7 @@ a{color:inherit;}
 .wrap{ max-width:1180px; margin:0 auto; padding:0 18px; }
 
 header.top{
-  position:sticky; top:0; z-index:40; background:rgba(252,252,253,.94);
+  position:sticky; top:0; z-index:40; background:var(--bar);
   backdrop-filter:saturate(1.2) blur(8px); border-bottom:1px solid var(--line);
 }
 .topbar{ display:flex; align-items:center; gap:14px; padding:10px 0; flex-wrap:wrap; }
@@ -43,15 +127,22 @@ header.top{
 .wordmark span{ color:var(--ink-3); font-size:.82rem; font-family:var(--sans); margin-left:8px; }
 .search{
   flex:1 1 220px; max-width:360px; display:flex; align-items:center; gap:8px;
-  border:1px solid var(--line); background:#fff; border-radius:9px; padding:7px 11px;
+  border:1px solid var(--line); background:var(--surface); border-radius:9px; padding:7px 11px;
 }
 .search input{ border:0; outline:0; font:inherit; font-size:.92rem; width:100%; background:transparent; color:var(--ink); }
-.search svg{ flex:none; }
+.search svg{ flex:none; color:var(--ink-3); }
 .btn{
-  font:inherit; font-size:.86rem; background:#fff; color:var(--ink);
+  font:inherit; font-size:.86rem; background:var(--surface); color:var(--ink);
   border:1px solid var(--line); border-radius:9px; padding:7px 13px; cursor:pointer;
 }
 .btn:hover{ border-color:var(--ink-3); }
+.btn.theme{ display:inline-flex; align-items:center; gap:6px; min-height:36px; }
+.btn.theme svg{ width:15px; height:15px; flex:none; }
+.btn.theme .sun, .btn.theme .moon, .btn.theme .auto{ display:none; }
+html.light .btn.theme .sun{ display:block; }
+html.dark  .btn.theme .moon{ display:block; }
+html:not(.light):not(.dark) .btn.theme .auto{ display:block; }
+@media (max-width:760px){ .btn.theme .lbl{ display:none; } .btn.theme{ padding:7px 10px; } }
 
 /* ---------------- hero: the strip ---------------- */
 .hero{ padding:26px 0 8px; border-bottom:1px solid var(--line); }
@@ -76,7 +167,7 @@ header.top{
 .cells{ display:flex; flex-wrap:wrap; gap:3px; }
 .cell{
   width:21px; height:21px; border-radius:4px; border:1px solid var(--line);
-  background:#fff; color:var(--ink-3); font-size:.56rem; font-family:var(--sans);
+  background:var(--surface); color:var(--ink-3); font-size:.56rem; font-family:var(--sans);
   display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;
   transition:transform .08s ease, background .12s ease, border-color .12s ease;
 }
@@ -85,11 +176,13 @@ header.top{
   .cell{ width:27px; height:27px; font-size:.62rem; border-radius:5px; }
   #printbtn{ display:none; }
   .wordmark span{ display:none; }
+  .search{ flex-basis:120px; }
+  .topbar{ gap:10px; }
   .bookrow{ grid-template-columns:46px 1fr; gap:8px; }
   .wrap{ padding:0 13px; }
 }
-.cell.taught{ background:var(--taught); border-color:var(--taught); color:#fff; }
-.cell.here{ background:#fff; border:2px solid var(--here); color:var(--ink); font-weight:700; }
+.cell.taught{ background:var(--taught); border-color:var(--taught); color:var(--on-accent); }
+.cell.here{ background:var(--surface); border:2px solid var(--here); color:var(--ink); font-weight:700; }
 .cell.match{ box-shadow:0 0 0 2px var(--seam); border-color:var(--seam); }
 .cell.dim{ opacity:.26; }
 .cell.sel{ outline:2.5px solid var(--ink); outline-offset:1px; }
@@ -99,11 +192,11 @@ header.top{
 
 .chips{ display:flex; flex-wrap:wrap; gap:7px; margin:13px 0 4px; }
 .chip{
-  font:inherit; font-size:.79rem; border:1px solid var(--line); background:#fff;
+  font:inherit; font-size:.79rem; border:1px solid var(--line); background:var(--surface);
   border-radius:100px; padding:4px 12px; cursor:pointer; color:var(--ink-2);
 }
 .chip:hover{ border-color:var(--ink-3); }
-.chip[aria-pressed="true"]{ background:var(--ink); border-color:var(--ink); color:#fff; }
+.chip[aria-pressed="true"]{ background:var(--ink); border-color:var(--ink); color:var(--on-ink); }
 /* progress + tonight's action */
 .progress{ margin:14px 0 0; }
 .bar{ height:7px; border-radius:100px; background:var(--line-2); overflow:hidden; }
@@ -116,13 +209,13 @@ header.top{
 }
 .mark{
   font:inherit; font-size:.92rem; font-weight:600; cursor:pointer; min-height:46px;
-  background:var(--taught); color:#fff; border:1px solid var(--taught);
+  background:var(--taught); color:var(--on-accent); border:1px solid var(--taught);
   border-radius:10px; padding:11px 18px; flex:1 1 auto;
 }
 .mark:hover{ filter:brightness(1.08); }
 .mark[disabled]{ background:var(--line-2); border-color:var(--line); color:var(--ink-3); cursor:default; }
 .mini{
-  font:inherit; font-size:.8rem; cursor:pointer; background:#fff; color:var(--ink-2);
+  font:inherit; font-size:.8rem; cursor:pointer; background:var(--surface); color:var(--ink-2);
   border:1px solid var(--line); border-radius:10px; padding:10px 13px; min-height:46px;
 }
 .mini:hover{ border-color:var(--ink-3); }
@@ -132,12 +225,14 @@ header.top{
 .codebox.on{ display:flex; }
 .codebox input{
   flex:1 1 180px; font:inherit; font-size:.85rem; padding:9px 11px; min-height:44px;
-  border:1px solid var(--line); border-radius:9px; background:#fff; color:var(--ink);
+  border:1px solid var(--line); border-radius:9px; background:var(--surface); color:var(--ink);
 }
 .codebox label{ font-size:.76rem; color:var(--ink-3); flex:1 1 100%; }
 .detail .mark{ margin-top:12px; flex:0 0 auto; }
 .legend{ display:flex; gap:16px; flex-wrap:wrap; font-size:.75rem; color:var(--ink-3); margin-top:11px; padding-top:10px; border-top:1px solid var(--line-2); }
-.legend i{ width:12px; height:12px; border-radius:3px; display:inline-block; vertical-align:-2px; margin-right:5px; border:1px solid var(--line); }
+.legend i{ width:12px; height:12px; border-radius:3px; display:inline-block; vertical-align:-2px; margin-right:5px; border:1px solid var(--line); background:var(--surface); }
+.legend i.l-taught{ background:var(--taught); border-color:var(--taught); }
+.legend i.l-here{ border:2px solid var(--here); }
 
 /* ---------------- detail card ---------------- */
 .detail{ margin-top:14px; border:1px solid var(--line); border-left:4px solid var(--taught); border-radius:11px; background:var(--panel); padding:15px 17px; }
@@ -153,7 +248,7 @@ header.top{
 .pill.c{ border-color:var(--seam); color:var(--seam); }
 
 /* ---------------- book sections ---------------- */
-.jump{ position:sticky; top:var(--topH,53px); z-index:30; background:rgba(252,252,253,.94); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); }
+.jump{ position:sticky; top:var(--topH,53px); z-index:30; background:var(--bar); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); }
 .jump .inner{ display:flex; gap:4px; align-items:center; overflow-x:auto; padding:8px 0; scrollbar-width:none; }
 .jump .inner::-webkit-scrollbar{ display:none; }
 .jump button{
@@ -162,8 +257,8 @@ header.top{
   min-height:38px;
 }
 .jump button:hover{ border-color:var(--line); }
-.jump button.on{ background:var(--ink); color:#fff; }
-.jump button.on span{ color:rgba(255,255,255,.72) !important; }
+.jump button.on{ background:var(--ink); color:var(--on-ink); }
+.jump button.on span{ color:var(--on-ink-soft) !important; }
 .jump button.home{ border-color:var(--line); color:var(--ink); font-weight:600; flex:none; }
 .jump button.home svg{ vertical-align:-2px; margin-right:5px; }
 
@@ -172,8 +267,8 @@ header.top{
   position:fixed; right:14px; z-index:50; display:none; align-items:center; gap:7px;
   bottom:calc(16px + env(safe-area-inset-bottom, 0px));
   font:inherit; font-size:.86rem; font-weight:600; cursor:pointer;
-  background:var(--ink); color:#fff; border:0; border-radius:100px;
-  padding:13px 18px; min-height:48px; box-shadow:0 4px 16px rgba(0,0,0,.22);
+  background:var(--ink); color:var(--on-ink); border:0; border-radius:100px;
+  padding:13px 18px; min-height:48px; box-shadow:0 4px 16px var(--shadow);
 }
 .tomap.on{ display:flex; }
 @media print{ .tomap{ display:none !important; } }
@@ -217,8 +312,8 @@ header.top{
 .ntrow .l{ color:var(--ink-2); }
 .ntrow .l b{ color:var(--ink); }
 
-.care{ border:1px solid var(--seam); border-radius:12px; padding:14px 16px; background:#fff; }
-.care h3{ color:var(--seam); border-bottom-color:rgba(123,45,38,.2); }
+.care{ border:1px solid var(--seam); border-radius:12px; padding:14px 16px; background:var(--panel); }
+.care h3{ color:var(--seam); border-bottom-color:var(--seam-soft); }
 .care p{ color:var(--ink); }
 
 footer.end{ border-top:1px solid var(--line); margin-top:40px; padding:22px 0 46px; font-size:.82rem; color:var(--ink-3); }
@@ -230,9 +325,14 @@ footer.end p{ margin:0 0 5px; max-width:78ch; }
 /* ---------------- print: falls back to the five sheets ---------------- */
 @media print{
   @page{ size:Letter; margin:12mm 13mm; }
-  :root{ --seam:#4a3813; --taught:#4a3813; --line:#767676; --line-2:#c9c9c9; --ink-2:#333; --ink-3:#3a3a3a; }
+  :root, html.dark, html.light{
+    --ground:#fff; --panel:#fff; --surface:#fff; --ink:#000;
+    --seam:#4a3813; --taught:#4a3813; --line:#767676; --line-2:#c9c9c9; --ink-2:#333; --ink-3:#3a3a3a;
+    --on-ink:#fff; --on-accent:#fff; --seam-soft:#c9c9c9;
+  }
+  html, body{ background:#fff !important; }
   header.top, .jump, .chips, .legend, .stripwrap, .detail, .hero p.lede, .btn{ display:none !important; }
-  body{ background:#fff; font-size:9.5pt; }
+  body{ font-size:9.5pt; }
   .wrap{ max-width:none; padding:0; }
   .hero{ display:none; }
   .book{ page-break-after:always; page-break-inside:avoid; padding:0; border:0; }
@@ -251,10 +351,16 @@ footer.end p{ margin:0 0 5px; max-width:78ch; }
   <div class="wrap topbar">
     <div class="wordmark">The Psalms <span>a map for the class</span></div>
     <label class="search">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6E7684" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
       <input id="q" type="search" placeholder="Search a psalm number, a name, a word" aria-label="Search the map">
     </label>
     <button class="btn" id="printbtn">Print the five sheets</button>
+    <button class="btn theme" id="themebtn" type="button" aria-label="Theme: follows your device" title="Switch between light, dark, and device theme">
+      <svg class="auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></svg>
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.2 2.2M16.9 16.9l2.2 2.2M4.9 19.1l2.2-2.2M16.9 7.1l2.2-2.2"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+      <span class="lbl">Theme</span>
+    </button>
   </div>
 </header>
 
@@ -291,8 +397,8 @@ footer.end p{ margin:0 0 5px; max-width:78ch; }
       <div class="savenote" id="savenote"></div>
 
       <div class="legend">
-        <span><i style="background:#1A6040;border-color:#1A6040"></i>Learned</span>
-        <span><i style="border:2px solid #B8860B"></i>Next up tonight</span>
+        <span><i class="l-taught"></i>Learned</span>
+        <span><i class="l-here"></i>Next up tonight</span>
         <span><i></i>Still ahead</span>
       </div>
 
@@ -609,7 +715,7 @@ function show(n){
              :'Not quoted by any New Testament writer')}</dd></div>
       <div><dt>This book closes at</dt><dd>${b.seamRef}</dd></div>
     </dl>
-    <button class="mark" type="button" id="toggleTaught" data-n="${n}" ${isTaught(n)?'style="background:#fff;color:var(--taught);"':''}>
+    <button class="mark" type="button" id="toggleTaught" data-n="${n}" ${isTaught(n)?'style="background:var(--surface);color:var(--taught);"':''}>
       ${isTaught(n)?'Learned — tap to unmark':'Mark Psalm '+n+' as learned'}
     </button>`;
   document.getElementById('toggleTaught').onclick=()=>setTaught(n,!isTaught(n));
@@ -718,6 +824,33 @@ q.addEventListener('input',()=>{
   });
   nores.classList.toggle('hidden',hits>0);
 });
+
+/* ---------------- theme: light, dark, or follow the device ---------------- */
+const THEME_KEY='psalms-map-theme';
+const themeBtn=document.getElementById('themebtn');
+const themeMeta=document.getElementById('themecolor');
+const darkMQ=window.matchMedia?window.matchMedia('(prefers-color-scheme: dark)'):null;
+function currentTheme(){
+  const el=document.documentElement;
+  return el.classList.contains('dark')?'dark':el.classList.contains('light')?'light':'system';
+}
+function applyTheme(mode){
+  const el=document.documentElement;
+  el.classList.remove('dark','light');
+  if(mode==='dark'||mode==='light') el.classList.add(mode);
+  const isDark=mode==='dark'||(mode==='system'&&darkMQ&&darkMQ.matches);
+  if(themeMeta) themeMeta.setAttribute('content',isDark?'#15171C':'#FCFCFD');
+  const label={system:'Theme: follows your device',light:'Theme: light',dark:'Theme: dark'}[mode];
+  themeBtn.setAttribute('aria-label',label);
+  themeBtn.title=label+'. Tap to change.';
+  try{ if(mode==='system') localStorage.removeItem(THEME_KEY); else localStorage.setItem(THEME_KEY,mode); }catch(e){}
+}
+applyTheme(currentTheme());
+themeBtn.onclick=()=>{
+  const order=['system','light','dark'];
+  applyTheme(order[(order.indexOf(currentTheme())+1)%order.length]);
+};
+if(darkMQ&&darkMQ.addEventListener) darkMQ.addEventListener('change',()=>{ if(currentTheme()==='system') applyTheme('system'); });
 
 document.getElementById('printbtn').onclick=(e)=>{
   document.querySelectorAll('.book').forEach(s=>s.classList.remove('hidden'));
