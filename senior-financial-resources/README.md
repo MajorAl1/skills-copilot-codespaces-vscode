@@ -48,6 +48,8 @@ Any claim in `extraClaims` or a sidebar's `claims`, any entry, and any section m
 
 `meta.pendingUpdates` entries: `{ id, date (or null), trigger, affects: [section or entry ids], notice }`. The `notice` text is shown once `date` passes.
 
+**The header date is a summary, not the record.** `meta.compileDate` says when the last full verification pass happened. The per-figure `asOf` and `reviewBy` dates are the record, and they drive the REVIEW DUE flags and the "figures due for review" count in the header. The build refuses a `compileDate` that is later than any figure's `reviewBy`, so the header cannot be made to look fresher than the figures beneath it.
+
 **Review-date policy.** `reviewBy` is the next date on which the primary source is expected to publish a change (calendar-year figures: December 31; federal-poverty-level figures: April 1; fiscal-year funding: September 30), or 90 days after the compile date for status snapshots. These are editorial deadlines, not claims about the programs.
 
 ## Deploying on Netlify

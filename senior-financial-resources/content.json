@@ -2,7 +2,7 @@
   "schemaVersion": "1.6",
   "publicationStatus": "published",
   "meta": {
-    "version": "1.6",
+    "version": "1.6.1",
     "compileDate": "2026-05-04",
     "compileDateDisplay": "Monday, May 04, 2026",
     "methodologyVersion": "4.4",
@@ -3467,6 +3467,11 @@
       "version": "1.6",
       "date": "2026-09-20",
       "changes": "Freshness architecture. Content moved to content.json (single source of truth; the page loads the newest copy). Dated figures carry as-of and review-by dates and are flagged REVIEW DUE automatically once the review date passes. Scheduled changes (TotalAssist launch, HAF wind-down) surface as notices on their trigger dates. Fixed a duplicate entry id (module 5 USDA Section 504 is now entry-usda-504-m5). No factual claim text was changed; facts were last verified May 4, 2026."
+    },
+    {
+      "version": "1.6.1",
+      "date": "2026-09-20",
+      "changes": "Header now reports how many figures are due for review, computed from per-figure dates. The build refuses a verified date that postdates an unreviewed figure. No content changes."
     }
   ]
 }
