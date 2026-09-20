@@ -1,10 +1,14 @@
-# Netlify configuration for The Psalms Interactive Map.
-# The app is a single self-contained HTML file with no build step,
-# so Netlify serves the psalms-map folder as-is.
+# Netlify configuration for this repository, which hosts two independent sites:
+#   psalms-map/                  -> The Psalms Interactive Map   (Netlify site "psalms-map")
+#   senior-financial-resources/  -> Senior Financial Resources    (Netlify site "senior-financial-resources")
+#
+# Both sites build from the repository root with no per-site settings. The build script reads
+# the SITE_NAME / SITE_ID that Netlify provides during a build, and copies the matching folder
+# into dist/. A site therefore never needs a "base directory" or "publish directory" in the UI.
 
 [build]
-  publish = "psalms-map"
-  command = ""
+  publish = "dist"
+  command = "bash netlify-build.sh"
 
 [[headers]]
   for = "/*"
