@@ -52,7 +52,9 @@ Any claim in `extraClaims` or a sidebar's `claims`, any entry, and any section m
 
 ## Deploying on Netlify
 
-Create a new site from this repository with **Base directory** set to `senior-financial-resources`. The folder's `netlify.toml` then applies: publish directory is the folder itself, the build command re-runs `tools/build.js`, and `content.json`, `manifest.json`, `service-worker.js`, and `index.html` are served with `Cache-Control: no-cache` so the service worker, not the CDN, decides what is cached. The repository's root `netlify.toml` belongs to the Psalms map site and is unaffected.
+The repository's root `netlify.toml` runs `netlify-build.sh`, which reads the `SITE_NAME` Netlify provides and publishes the folder that belongs to that site. So the Netlify site named `senior-financial-resources` needs no base directory, build command, or publish directory: link it to the repository, branch `main`, and leave every field blank. Cache headers for the data files come from `_headers` in this folder. The Psalms map site builds from the same script and is unaffected.
+
+The folder's own `netlify.toml` is kept for the alternative setup where the site's base directory is set to `senior-financial-resources`; either route produces the same site.
 
 ## Not in v1.6
 

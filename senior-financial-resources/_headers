@@ -1,0 +1,9 @@
+# Data files and the worker must never be cached by the CDN or browser; the service worker decides.
+/content.json
+  Cache-Control: no-cache
+/manifest.json
+  Cache-Control: no-cache
+/service-worker.js
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
