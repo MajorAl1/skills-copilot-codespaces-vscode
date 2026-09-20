@@ -2,7 +2,7 @@
   "schemaVersion": "1.6",
   "publicationStatus": "published",
   "meta": {
-    "version": "1.6.1",
+    "version": "1.6.2",
     "compileDate": "2026-05-04",
     "compileDateDisplay": "Monday, May 04, 2026",
     "methodologyVersion": "4.4",
@@ -325,9 +325,9 @@
                   "classification": "VERIFIED"
                 },
                 {
-                  "text": "2026 federal limits (48 states + D.C.): QMB ~$1,350/month individual, ~$1,824/month couple (gross monthly income after a $20 disregard). SLMB ~$1,616/$2,184. QI ~$1,816/$2,455. Federal resource limits: $9,660/individual and $14,470/couple for QMB and SLMB; $9,950/$14,910 for QI. Limits change April 1 each year with FPL updates. States may set higher limits or waive asset tests (e.g., Connecticut, Maine, Delaware, California).",
+                  "text": "2026 federal limits (48 states + D.C.): QMB ~$1,350/month individual, ~$1,824/month couple (gross monthly income after a $20 disregard). SLMB ~$1,616/$2,184. QI ~$1,816/$2,455. Federal resource limits: $9,950/individual and $14,910/couple for QMB, SLMB, and QI. Limits change April 1 each year with FPL updates. States may set higher limits or waive asset tests (e.g., Connecticut, Maine, Delaware, California).",
                   "classification": "PLAUSIBLE",
-                  "asOf": "2026-04-01",
+                  "asOf": "2026-09-20",
                   "reviewBy": "2027-04-01",
                   "sourceUrl": "https://www.medicare.gov/basics/costs/help/medicare-savings-programs"
                 },
@@ -366,11 +366,11 @@
                   "sourceUrl": "https://www.ssa.gov/medicare/part-d-extra-help"
                 },
                 {
-                  "text": "People enrolled in Medicaid or a Medicare Savings Program (QMB/SLMB/QI) are automatically entitled. Others may apply if income is at or below 150 percent of the federal poverty line and resources are below $17,600 (single) or $35,130 (couple) for 2025 limits carried forward.",
+                  "text": "People enrolled in Medicaid or a Medicare Savings Program (QMB/SLMB/QI) are automatically entitled. Others may apply if income is at or below 150 percent of the federal poverty line and resources are below $18,090 (single) or $36,100 (couple) for 2026.",
                   "classification": "VERIFIED",
-                  "asOf": "2025-01-01",
+                  "asOf": "2026-09-20",
                   "reviewBy": "2026-12-31",
-                  "sourceUrl": "https://www.ssa.gov/medicare/part-d-extra-help"
+                  "sourceUrl": "https://www.medicare.gov/basics/costs/help/drug-costs"
                 }
               ],
               "howApply": "Online at ssa.gov/extrahelp, by phone at 1-800-772-1213, or at a local Social Security office.",
@@ -3472,6 +3472,11 @@
       "version": "1.6.1",
       "date": "2026-09-20",
       "changes": "Header now reports how many figures are due for review, computed from per-figure dates. The build refuses a verified date that postdates an unreviewed figure. No content changes."
+    },
+    {
+      "version": "1.6.2",
+      "date": "2026-09-20",
+      "changes": "Corrected two figures after the scheduled source check against medicare.gov: Medicare Savings Program resource limits for 2026 are $9,950 individual / $14,910 couple for QMB, SLMB and QI (previously stated $9,660 / $14,470 for QMB and SLMB); Extra Help resource limits for 2026 are $18,090 single / $36,100 couple (previously 2025 figures carried forward). No other content changed."
     }
   ]
 }

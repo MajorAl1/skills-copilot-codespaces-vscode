@@ -104,11 +104,12 @@ const WATCHERS = [
         row('SLMB income couple /month', G(c.text, /SLMB ~\$[\d,]+\/\$([\d,]+)/), v['SLMB income couple']),
         row('QI income individual /month', G(c.text, /QI ~\$([\d,]+)\//), v['QI income individual']),
         row('QI income couple /month', G(c.text, /QI ~\$[\d,]+\/\$([\d,]+)/), v['QI income couple']),
-        row('QMB/SLMB resources individual', G(c.text, /resource limits: \$([\d,]+)\/individual/), v['QMB resources individual'], 'claim states one figure for QMB and SLMB; compared with the QMB row'),
-        row('QMB/SLMB resources couple', G(c.text, /\$([\d,]+)\/couple for QMB and SLMB/), v['QMB resources couple'], 'compared with the QMB row'),
-        row('SLMB resources individual', G(c.text, /resource limits: \$([\d,]+)\/individual/), v['SLMB resources individual'], 'same stated figure, compared with the SLMB row'),
-        row('QI resources individual', G(c.text, /\$([\d,]+)\/\$[\d,]+ for QI/), v['QI resources individual']),
-        row('QI resources couple', G(c.text, /\$[\d,]+\/\$([\d,]+) for QI/), v['QI resources couple']),
+        row('QMB resources individual', G(c.text, /resource limits: \$([\d,]+)\/individual/), v['QMB resources individual']),
+        row('QMB resources couple', G(c.text, /\$([\d,]+)\/couple for QMB, SLMB, and QI/), v['QMB resources couple']),
+        row('SLMB resources individual', G(c.text, /resource limits: \$([\d,]+)\/individual/), v['SLMB resources individual']),
+        row('SLMB resources couple', G(c.text, /\$([\d,]+)\/couple for QMB, SLMB, and QI/), v['SLMB resources couple']),
+        row('QI resources individual', G(c.text, /resource limits: \$([\d,]+)\/individual/), v['QI resources individual']),
+        row('QI resources couple', G(c.text, /\$([\d,]+)\/couple for QMB, SLMB, and QI/), v['QI resources couple']),
         { figure: 'Extra Help brand-name copay cap', stated: G(eh.text, /\$([\d.]+) per brand-name drug/), live: v['Extra Help brand copay cap'], claim: eh, entry: 'entry-extra-help', note: yearNote }
       ];
     }
